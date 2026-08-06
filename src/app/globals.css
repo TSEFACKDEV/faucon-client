@@ -12,8 +12,8 @@
   html, body {
     height: 100%;
     font-family: "Inter", system-ui, sans-serif;
-    background-color: #F5F0E8;
-    color: #1A1A1A;
+    background-color: #FAF9F7;
+    color: #211F1B;
     -webkit-font-smoothing: antialiased;
   }
 }
@@ -25,7 +25,8 @@
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #C9C4BC; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: #D7D2CA; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #B8B2A8; }
 
 /* Toast override */
 .Toastify__toast {
@@ -35,5 +36,5 @@
 }
 
 /* Leaflet fix */
-.leaflet-container { height: 100%; width: 100%; background: #E8E4DC; }
-.leaflet-tile-pane { filter: saturate(0.7) brightness(1.05); }
+.leaflet-container { height: 100%; width: 100%; background: #F3F1EE; }
+.leaflet-tile-pane { filter: saturate(0.75) brightness(1.03); }

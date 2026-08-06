@@ -9,11 +9,11 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary:   'bg-[#1B4332] text-white hover:bg-[#2D6A4F] border border-[#1B4332]',
-  secondary: 'bg-white text-[#1B4332] border border-[#1B4332] hover:bg-[#F5F0E8]',
-  danger:    'bg-white text-[#EF4444] border border-[#EF4444] hover:bg-[#FEE2E2]',
-  ghost:     'bg-transparent text-[#6B7280] hover:bg-[#F5F0E8] border border-transparent',
-  accent:    'bg-[#F59E0B] text-white hover:bg-[#D97706] border border-[#F59E0B]',
+  primary:   'bg-primary-600 text-white hover:bg-primary-700 border border-primary-600',
+  secondary: 'bg-white text-primary-600 border border-primary-600 hover:bg-primary-50',
+  danger:    'bg-white text-danger-strong border border-danger-strong hover:bg-danger-tint',
+  ghost:     'bg-transparent text-neutral-600 hover:bg-neutral-50 border border-transparent',
+  accent:    'bg-accent-400 text-white hover:bg-accent-600 border border-accent-400',
 };
 
 const sizes = {
@@ -38,10 +38,10 @@ export default function Button({
       disabled={disabled || loading}
       className={`
         inline-flex items-center justify-center gap-2
-        rounded-[8px] font-semibold
-        transition-all duration-150
-        cursor-pointer
-        disabled:opacity-50 disabled:cursor-not-allowed
+        rounded-[10px] font-semibold
+        transition-all duration-200 ease-out
+        cursor-pointer active:scale-[0.98]
+        disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
         ${variants[variant]}
         ${sizes[size]}
         ${fullWidth ? 'w-full' : ''}

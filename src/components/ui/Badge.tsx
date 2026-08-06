@@ -2,31 +2,31 @@ import { ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
-  color?: 'green' | 'orange' | 'red' | 'gray' | 'yellow';
+  color?: 'success' | 'warning' | 'danger' | 'neutral' | 'primary';
   dot?: boolean;
 }
 
 const colors = {
-  green:  'bg-[#D1FAE5] text-[#065F46]',
-  orange: 'bg-[#FEF3C7] text-[#92400E]',
-  red:    'bg-[#FEE2E2] text-[#991B1B]',
-  gray:   'bg-[#F3F4F6] text-[#374151]',
-  yellow: 'bg-[#FEF9C3] text-[#713F12]',
+  success: 'bg-success-tint text-success-strong',
+  warning: 'bg-warning-tint text-warning-strong',
+  danger:  'bg-danger-tint text-danger-strong',
+  neutral: 'bg-neutral-50 text-neutral-700',
+  primary: 'bg-primary-50 text-primary-600',
 };
 
 const dots = {
-  green:  'bg-[#10B981]',
-  orange: 'bg-[#F59E0B]',
-  red:    'bg-[#EF4444]',
-  gray:   'bg-[#9CA3AF]',
-  yellow: 'bg-[#EAB308]',
+  success: 'bg-success',
+  warning: 'bg-warning',
+  danger:  'bg-danger',
+  neutral: 'bg-neutral-500',
+  primary: 'bg-primary-400',
 };
 
-export default function Badge({ children, color = 'gray', dot = false }: Props) {
+export default function Badge({ children, color = 'neutral', dot = false }: Props) {
   return (
     <span className={`
       inline-flex items-center gap-1.5 px-2.5 py-0.5
-      rounded-full text-xs font-semibold
+      rounded-full text-xs font-semibold whitespace-nowrap
       ${colors[color]}
     `}>
       {dot && (

@@ -1,57 +1,26 @@
 import * as Yup from 'yup';
 
 export const loginSchema = Yup.object({
-  email: Yup.string()
-    .email('Email invalide')
-    .required('Email requis'),
-  password: Yup.string()
-    .min(6, 'Au moins 6 caractères')
-    .required('Mot de passe requis'),
-  deviceId: Yup.string()
-    .required('ID dispositif requis'),
-});
-
-export const registerSchema = Yup.object({
-  userName: Yup.string()
-    .min(3, 'Au moins 3 caractères')
-    .required('Nom requis'),
-  email: Yup.string()
-    .email('Email invalide')
-    .required('Email requis'),
-  password: Yup.string()
-    .min(6, 'Au moins 6 caractères')
-    .required('Mot de passe requis'),
-});
-
-export const addDeviceSchema = Yup.object({
-  imei: Yup.string()
-    .matches(/^\d{15}$/, 'IMEI : exactement 15 chiffres')
-    .required('IMEI requis'),
-  nom: Yup.string()
-    .min(2, 'Au moins 2 caractères')
-    .max(50, 'Maximum 50 caractères')
-    .required('Nom requis'),
-});
-
-export const profileSchema = Yup.object({
-  userName: Yup.string().min(2, 'Au moins 2 caractères').required('Nom requis'),
   email: Yup.string().email('Email invalide').required('Email requis'),
-  telephone: Yup.string().optional(),
+  password: Yup.string().min(6, 'Au moins 6 caractères').required('Mot de passe requis'),
 });
 
-export const speedLimitSchema = Yup.object({
-  seuilKmh: Yup.number()
-    .min(10, 'Minimum 10 km/h')
-    .max(250, 'Maximum 250 km/h')
-    .required('Seuil requis'),
+export const createUserSchema = Yup.object({
+  userName: Yup.string().min(2, 'Au moins 2 caractères').max(50).required("Nom d'utilisateur requis"),
+  email: Yup.string().email('Email invalide').required('Email requis'),
+  password: Yup.string().min(8, 'Au moins 8 caractères').required('Mot de passe requis'),
+  role: Yup.string().oneOf(['UTILISATEUR', 'ADMIN']).required(),
 });
 
-export const geofenceSchema = Yup.object({
-  nom: Yup.string().required('Nom requis'),
-  centreLat: Yup.number().required('Latitude requise'),
-  centreLon: Yup.number().required('Longitude requise'),
-  rayonMetres: Yup.number()
-    .min(50, 'Minimum 50 m')
-    .max(50000, 'Maximum 50 km')
-    .required('Rayon requis'),
+export const provisionSchema = Yup.object({
+  count: Yup.number().min(1, 'Minimum 1').max(500, 'Maximum 500').required('Nombre requis'),
+  prefix: Yup.string()
+    .matches(/^[A-Z0-9]{2,10}$/i, '2 à 10 caractères alphanumériques')
+    .required('Préfixe requis'),
+});
+
+export const phoneAlerteSchema = Yup.object({
+  telephone: Yup.string()
+    .matches(/^\+[1-9]\d{7,14}$/, 'Format attendu : +237XXXXXXXXX')
+    .required('Numéro requis'),
 });

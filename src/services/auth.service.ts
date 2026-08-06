@@ -2,7 +2,11 @@ import api from '@/lib/axios';
 import Cookies from 'js-cookie';
 import { AuthResponse, User, ApiResponse } from '@/types';
 
-const COOKIE_OPTIONS = { expires: 7, secure: false, sameSite: 'lax' as const };
+const COOKIE_OPTIONS = {
+  expires: 7,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+};
 
 export const authService = {
   login: async (
@@ -39,7 +43,7 @@ export const authService = {
     email: string;
     telephone?: string;
   }): Promise<User> => {
-    const { data } = await api.put<ApiResponse<User>>('/auth/profile', payload);
+    const { data } = await api.patch<ApiResponse<User>>('/auth/me', payload);
     return data.data!;
   },
 

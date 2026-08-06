@@ -1,200 +1,184 @@
 'use client';
-import { useState } from 'react';
-import { Formik, Form } from 'formik';
+import { useCallback, useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { RiArrowRightSLine, RiLogoutBoxLine } from 'react-icons/ri';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth.store';
+import {
+  IoPersonOutline, IoShieldCheckmarkOutline, IoInformationCircleOutline,
+  IoLogOutOutline,
+} from 'react-icons/io5';
 import { authService } from '@/services/auth.service';
-import { profileSchema } from '@/lib/validations';
-import { useDeviceStore } from '@/store/device.store';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
+import { User } from '@/types';
+import { formatDateTime } from '@/lib/utils';
 import Card from '@/components/ui/Card';
-import { useSocket } from '@/hooks/useSocket';
+import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0 },
+};
 
 export default function ParametresPage() {
-  const router   = useRouter();
-  const { user, clearUser } = useAuthStore();
-  const { devices } = useDeviceStore();
-  const { disconnect } = useSocket([]);
-  const [language, setLanguage] = useState('fr');
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
-  const handleSaveProfile = async (
-    values: { userName: string; email: string; telephone: string },
-    { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void }
-  ) => {
+  const [userName, setUserName] = useState('');
+  const [email, setEmail] = useState('');
+  const [telephone, setTelephone] = useState('');
+
+  const load = useCallback(async () => {
     try {
-      await authService.updateProfile(values);
-      toast.success('Profil mis a jour');
-    } catch {
-      toast.error('Erreur lors de la mise a jour');
+      const u = await authService.me();
+      setUser(u);
+      setUserName(u.userName);
+      setEmail(u.email);
+      setTelephone(u.telephone ?? '');
+    } catch (err) {
+      console.error('[Parametres]', err);
+      toast.error('Impossible de charger le profil');
     } finally {
-      setSubmitting(false);
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const initial = async () => {
+      await load();
+    };
+    initial();
+  }, [load]);
+
+  const saveProfile = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const u = await authService.updateProfile({ userName, email, telephone: telephone || undefined });
+      setUser(u);
+      toast.success('Profil mis à jour');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      toast.error(e.response?.data?.message ?? 'Impossible de mettre à jour le profil');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleLogout = async () => {
+  const logout = async () => {
+    setLogoutLoading(true);
     try {
       await authService.logout();
-      disconnect();
-      clearUser();
-      router.push('/');
+      window.location.href = '/';
     } catch {
-      toast.error('Erreur lors de la deconnexion');
+      toast.error('Erreur lors de la déconnexion');
+      setLogoutLoading(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-primary-200 border-t-primary-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <div className="p-8 text-neutral-600">Impossible de charger le profil.</div>;
+  }
+
   return (
-    <div className="p-8 max-w-2xl">
+    <motion.div variants={container} initial="hidden" animate="show" className="p-8 flex flex-col gap-6 max-w-2xl">
+      <motion.div variants={item}>
+        <h1 className="text-2xl font-semibold text-neutral-900">Paramètres</h1>
+        <p className="text-sm text-neutral-600 mt-1">Votre compte administrateur sur la plateforme</p>
+      </motion.div>
 
-      {/* HEADER */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#1A1A1A]">Parametres</h1>
-        <p className="text-sm text-[#6B7280] mt-1">
-          Gerez votre compte et vos preferences.
-        </p>
-      </div>
-
-      {/* PROFIL */}
-      <div className="mb-6">
-        <p className="text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide mb-3">
-          Profil utilisateur
-        </p>
+      <motion.div variants={item}>
         <Card>
-          <Formik
-            initialValues={{
-              userName:  user?.userName  ?? '',
-              email:     user?.email     ?? '',
-              telephone: user?.telephone ?? '',
-            }}
-            validationSchema={profileSchema}
-            onSubmit={handleSaveProfile}
-            enableReinitialize
-          >
-            {({ values, errors, touched, handleChange, handleBlur, isSubmitting }) => (
-              <Form className="flex flex-col gap-5">
-                <div className="grid grid-cols-2 gap-5">
-                  <Input
-                    label="Nom"
-                    name="userName"
-                    placeholder="MAKA MAKA"
-                    value={values.userName}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    error={touched.userName ? errors.userName : undefined}
-                  />
-                  <Input
-                    label="Email"
-                    name="email"
-                    type="email"
-                    placeholder="maka@faucon.app"
-                    value={values.email}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    error={touched.email ? errors.email : undefined}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <Input
-                    label="Telephone"
-                    name="telephone"
-                    placeholder="+237 6 55 12 34 56"
-                    value={values.telephone}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                  />
-                </div>
-                <div>
-                  <Button
-                    type="submit"
-                    variant="accent"
-                    loading={isSubmitting}
-                  >
-                    Enregistrer
-                  </Button>
-                </div>
-              </Form>
-            )}
-          </Formik>
-        </Card>
-      </div>
+          <div className="flex items-center gap-4 pb-5 border-b border-neutral-100 mb-5">
+            <div className="w-12 h-12 rounded-[12px] bg-primary-50 text-primary-600 flex items-center justify-center text-lg font-bold">
+              {user.userName.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-neutral-900">{user.userName}</p>
+              <p className="text-sm text-neutral-600">{user.email}</p>
+            </div>
+            <Badge color="primary">
+              <IoShieldCheckmarkOutline size={13} className="mr-1" />
+              {user.role === 'ADMIN' ? 'Administrateur' : 'Utilisateur'}
+            </Badge>
+          </div>
 
-      {/* COMPTE */}
-      <div className="mb-6">
-        <p className="text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide mb-3">
-          Compte
-        </p>
-        <Card padding={false}>
-          <div className="flex items-center justify-between px-6 py-4">
-            <span className="text-sm text-[#1A1A1A]">Dispositifs associes</span>
-            <span className="text-sm font-bold text-[#1A1A1A]">{devices.length}</span>
+          <div className="flex flex-col gap-4">
+            <Input
+              label="Nom d'utilisateur"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder="Votre nom"
+              leftIcon={<IoPersonOutline size={16} />}
+            />
+            <Input
+              label="Adresse email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="exemple@faucon.cm"
+            />
+            <Input
+              label="Téléphone"
+              value={telephone}
+              onChange={(e) => setTelephone(e.target.value)}
+              placeholder="+237XXXXXXXXX"
+            />
+            <Button loading={saving} onClick={saveProfile} className="self-start">
+              Enregistrer le profil
+            </Button>
           </div>
         </Card>
-      </div>
+      </motion.div>
 
-      {/* LANGUE */}
-      <div className="mb-6">
-        <p className="text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide mb-3">
-          Langue
-        </p>
-        <Card padding={false}>
-          <div className="px-6 py-4">
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="
-                w-64 border border-[#E5E0D8] rounded-[8px]
-                px-4 py-2.5 text-sm text-[#1A1A1A] bg-white
-                focus:outline-none focus:border-[#1B4332]
-                cursor-pointer
-              "
-            >
-              <option value="fr">Francais</option>
-              <option value="en">English</option>
-            </select>
+      <motion.div variants={item}>
+        <Card>
+          <h2 className="text-base font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+            <IoInformationCircleOutline size={18} className="text-primary-600" />
+            Informations de session
+          </h2>
+          <div className="flex flex-col gap-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-neutral-600">Compte créé le</span>
+              <span className="font-medium text-neutral-900">{formatDateTime(user.dateCreation)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-neutral-600">Rôle</span>
+              <Badge color="primary">{user.role}</Badge>
+            </div>
           </div>
         </Card>
-      </div>
+      </motion.div>
 
-      {/* INFORMATIONS */}
-      <div className="mb-10">
-        <p className="text-xs font-semibold text-[#9CA3AF] uppercase tracking-wide mb-3">
-          Informations
-        </p>
-        <Card padding={false}>
-          {[
-            { label: 'Politique de confidentialite', href: '#' },
-            { label: 'Aide et support', href: '#' },
-          ].map(({ label, href }, i) => (
-            <a 
-              key={label}
-              href={href}
-              className={`
-                flex items-center justify-between px-6 py-4
-                hover:bg-[#F5F0E8] transition-all cursor-pointer
-                text-sm text-[#1A1A1A]
-                ${i > 0 ? 'border-t border-[#F5F0E8]' : ''}
-              `}
-            >
-              {label}
-              <RiArrowRightSLine size={18} className="text-[#9CA3AF]" />
-            </a>
-          ))}
+      <motion.div variants={item}>
+        <Card>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-semibold text-neutral-900">Déconnexion</h2>
+              <p className="text-sm text-neutral-600 mt-0.5">
+                Terminer la session et revenir à l&apos;écran de connexion
+              </p>
+            </div>
+            <Button variant="danger" loading={logoutLoading} onClick={logout}>
+              <IoLogOutOutline size={16} />
+              Se déconnecter
+            </Button>
+          </div>
         </Card>
-      </div>
-
-      {/* DECONNEXION */}
-      <button
-        onClick={handleLogout}
-        className="
-          flex items-center gap-3 text-sm font-semibold text-[#EF4444]
-          hover:underline cursor-pointer transition-all
-        "
-      >
-        <RiLogoutBoxLine size={16} />
-        Deconnexion
-      </button>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

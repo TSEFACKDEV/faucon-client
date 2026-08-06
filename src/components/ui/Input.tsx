@@ -13,13 +13,13 @@ const Input = forwardRef<HTMLInputElement, Props>(
     return (
       <div className="flex flex-col gap-1.5 w-full">
         {label && (
-          <label className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
+          <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
             {label}
           </label>
         )}
         <div className="relative flex items-center">
           {leftIcon && (
-            <span className="absolute left-3 text-[#9CA3AF] text-base pointer-events-none">
+            <span className="absolute left-3 text-neutral-500 text-base pointer-events-none flex items-center">
               {leftIcon}
             </span>
           )}
@@ -27,24 +27,24 @@ const Input = forwardRef<HTMLInputElement, Props>(
             ref={ref}
             {...props}
             className={`
-              w-full bg-white border border-[#E5E0D8] rounded-[8px]
-              py-2.5 text-sm text-[#1A1A1A] placeholder:text-[#9CA3AF]
-              focus:outline-none focus:border-[#1B4332] focus:ring-2 focus:ring-[#1B4332]/10
-              transition-all
+              w-full bg-white border border-neutral-100 rounded-[10px]
+              py-2.5 text-sm text-neutral-900 placeholder:text-neutral-500
+              focus:outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10
+              transition-all duration-150
               ${leftIcon ? 'pl-10' : 'pl-4'}
               ${rightIcon ? 'pr-10' : 'pr-4'}
-              ${error ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/10' : ''}
+              ${error ? 'border-danger-strong focus:border-danger-strong focus:ring-danger-strong/10' : ''}
               ${className}
             `}
           />
           {rightIcon && (
-            <span className="absolute right-3 text-[#9CA3AF] text-base">
+            <span className="absolute right-3 text-neutral-500 text-base flex items-center">
               {rightIcon}
             </span>
           )}
         </div>
         {error && (
-          <p className="text-xs text-[#EF4444]">{error}</p>
+          <p className="text-xs text-danger-strong">{error}</p>
         )}
       </div>
     );

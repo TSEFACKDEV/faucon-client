@@ -2,17 +2,31 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Device, LivePosition } from '@/types';
 
-const OSM_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const SAT_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+// CARTO Voyager : gratuit, sans clé, pensé pour un usage applicatif —
+// contrairement à tile.openstreetmap.org (serveur de démo de l'OSM
+// Foundation, qui bannit les apps à fort trafic sans préavis).
+const OSM_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+export interface MapMarkerData {
+  id: string;
+  latitude: number;
+  longitude: number;
+  label: string;
+  color?: string;
+}
+
+export interface MapRoutePoint {
+  latitude: number;
+  longitude: number;
+}
 
 interface Props {
-  devices: Device[];
-  livePositions: Record<string, LivePosition>;
-  selectedId: string | null;
-  mapStyle: 'route' | 'satellite';
-  onMarkerClick: (id: string) => void;
+  markers: MapMarkerData[];
+  selectedId?: string | null;
+  onMarkerClick?: (id: string) => void;
+  route?: MapRoutePoint[];
+  routeColor?: string;
 }
 
 const createMarker = (color: string, label: string) => {
@@ -42,18 +56,18 @@ const createMarker = (color: string, label: string) => {
 };
 
 export default function MapView({
-  devices,
-  livePositions,
-  selectedId,
-  mapStyle,
+  markers,
+  selectedId = null,
   onMarkerClick,
+  route,
+  routeColor = '#363F70',
 }: Props) {
   const mapRef     = useRef<L.Map | null>(null);
-  const tileRef    = useRef<L.TileLayer | null>(null);
   const markersRef = useRef<Record<string, L.Marker>>({});
+  const polylineRef = useRef<L.Polyline | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fitDoneRef = useRef(false);
 
-  // Initialiser la carte
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -65,9 +79,10 @@ export default function MapView({
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    tileRef.current = L.tileLayer(OSM_URL, {
-      attribution: '© OpenStreetMap',
+    L.tileLayer(OSM_URL, {
+      attribution: '© OpenStreetMap contributors © CARTO',
       maxZoom: 19,
+      detectRetina: true,
     }).addTo(map);
 
     mapRef.current = map;
@@ -78,52 +93,87 @@ export default function MapView({
     };
   }, []);
 
-  // Changer le style de carte
-  useEffect(() => {
-    if (!mapRef.current || !tileRef.current) return;
-    tileRef.current.setUrl(mapStyle === 'satellite' ? SAT_URL : OSM_URL);
-  }, [mapStyle]);
-
-  // Mettre à jour les marqueurs
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current;
+    const activeIds = new Set<string>();
 
-    devices.forEach((device) => {
-      const pos = livePositions[device.id];
-      if (!pos) return;
+    markers.forEach((m) => {
+      activeIds.add(m.id);
+      const isSelected = m.id === selectedId;
+      const color = m.color ?? (isSelected ? '#363F70' : '#F2884D');
+      const icon  = createMarker(color, m.label);
+      const latlng: L.LatLngTuple = [m.latitude, m.longitude];
 
-      const isSelected = device.id === selectedId;
-      const color = isSelected ? '#1B4332' : '#F59E0B';
-      const label = `FCN-${device.imei.slice(-4)}`;
-      const icon  = createMarker(color, label);
-      const latlng: L.LatLngTuple = [pos.latitude, pos.longitude];
-
-      if (markersRef.current[device.id]) {
-        markersRef.current[device.id]
-          .setLatLng(latlng)
-          .setIcon(icon);
+      if (markersRef.current[m.id]) {
+        markersRef.current[m.id].setLatLng(latlng).setIcon(icon);
       } else {
-        const marker = L.marker(latlng, { icon })
-          .addTo(map)
-          .on('click', () => onMarkerClick(device.id));
-        markersRef.current[device.id] = marker;
+        const marker = L.marker(latlng, { icon }).addTo(map);
+        if (onMarkerClick) marker.on('click', () => onMarkerClick(m.id));
+        markersRef.current[m.id] = marker;
       }
     });
-  }, [devices, livePositions, selectedId]);
 
-  // Centrer sur le device sélectionné
+    Object.keys(markersRef.current).forEach((id) => {
+      if (!activeIds.has(id)) {
+        map.removeLayer(markersRef.current[id]);
+        delete markersRef.current[id];
+      }
+    });
+
+    // Cadrage automatique une seule fois, dès que des marqueurs arrivent —
+    // pas à chaque mise à jour, pour ne pas gêner un admin en train de
+    // naviguer sur la carte.
+    if (!fitDoneRef.current && markers.length > 0) {
+      fitDoneRef.current = true;
+      const bounds = L.latLngBounds(markers.map((m) => [m.latitude, m.longitude] as L.LatLngTuple));
+      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+    }
+  }, [markers, selectedId, onMarkerClick]);
+
+  // Trajet (polyline) — recalculé à chaque changement du tracé.
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    if (!route || route.length < 2) {
+      polylineRef.current?.remove();
+      polylineRef.current = null;
+      return;
+    }
+
+    const latlngs = route.map((p) => [p.latitude, p.longitude] as L.LatLngTuple);
+    if (polylineRef.current) {
+      polylineRef.current.setLatLngs(latlngs);
+    } else {
+      polylineRef.current = L.polyline(latlngs, {
+        color: routeColor,
+        weight: 3,
+        opacity: 0.85,
+      }).addTo(mapRef.current);
+    }
+  }, [route, routeColor]);
+
+  // Cadrage sur le trajet quand il n'y a pas de marqueurs (replay seul).
+  useEffect(() => {
+    if (!mapRef.current || fitDoneRef.current) return;
+    if (route && route.length > 0 && markers.length === 0) {
+      fitDoneRef.current = true;
+      const bounds = L.latLngBounds(route.map((p) => [p.latitude, p.longitude] as L.LatLngTuple));
+      mapRef.current.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
+    }
+  }, [route, markers.length]);
+
   useEffect(() => {
     if (!mapRef.current || !selectedId) return;
-    const pos = livePositions[selectedId];
-    if (!pos) return;
-    mapRef.current.flyTo([pos.latitude, pos.longitude], 14, { duration: 1 });
-  }, [selectedId, livePositions]);
+    const m = markers.find((x) => x.id === selectedId);
+    if (!m) return;
+    mapRef.current.flyTo([m.latitude, m.longitude], 14, { duration: 1 });
+  }, [selectedId]);
 
   return (
     <div
       ref={containerRef}
-      style={{ width: '100%', height: '100%', background: '#E8E4DC' }}
+      style={{ width: '100%', height: '100%', background: '#F3F1EE' }}
     />
   );
 }
