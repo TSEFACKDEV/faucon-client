@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
 import {
   IoPeopleOutline, IoHardwareChipOutline, IoRadioOutline, IoWarningOutline,
 } from 'react-icons/io5';
@@ -8,6 +9,9 @@ import dynamic from 'next/dynamic';
 import { adminService } from '@/services/admin.service';
 import { StatsOverview, VehiculeResume } from '@/types';
 import { ALARM_LABELS, MODE_LABELS } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/errors';
+import { useRealtime } from '@/hooks/useRealtime';
+import { useRealtimeStore } from '@/store/realtime.store';
 import Card from '@/components/ui/Card';
 import StatCard from '@/components/ui/StatCard';
 import GrowthLineChart from '@/components/dashboard/GrowthLineChart';
@@ -32,6 +36,26 @@ export default function DashboardPage() {
   const [vehicules, setVehicules] = useState<VehiculeResume[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Flux temps réel : chaque trame reçue par le backend met immédiatement à
+  // jour la position, la batterie et le statut « en ligne » du traceur, sans
+  // rechargement REST.
+  const livePositions = useRealtimeStore((s) => s.positions);
+  const liveVehiculeIds = vehicules.map((v) => v.id);
+  useRealtime(liveVehiculeIds);
+
+  const vehiculesLive = vehicules.map((v) => {
+    const live = livePositions[v.id];
+    if (!live) return v;
+    return {
+      ...v,
+      latitude: live.latitude,
+      longitude: live.longitude,
+      niveauBatterie: live.battery,
+      derniereCommunication: live.horodatage,
+      enLigne: true,
+    };
+  });
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -43,6 +67,7 @@ export default function DashboardPage() {
         setVehicules(v);
       } catch (err) {
         console.error('[Dashboard]', err);
+        toast.error(getErrorMessage(err, 'Impossible de charger les statistiques. Réessayez dans un instant.'));
       } finally {
         setLoading(false);
       }
@@ -50,7 +75,7 @@ export default function DashboardPage() {
     load();
   }, []);
 
-  const enLigneAvecPosition = vehicules.filter(
+  const enLigneAvecPosition = vehiculesLive.filter(
     (v) => v.enLigne && v.latitude != null && v.longitude != null
   );
 
@@ -100,7 +125,10 @@ export default function DashboardPage() {
                   latitude: v.latitude as number,
                   longitude: v.longitude as number,
                   label: v.nom,
-                  color: '#1F7A50',
+                  color: '#2563EB',
+                  // Halo pulsant sur les traceurs qui viennent de transmettre
+                  // une trame en temps réel.
+                  pulse: !!livePositions[v.id],
                 }))}
               />
             ) : (

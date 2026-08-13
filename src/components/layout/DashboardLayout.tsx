@@ -2,11 +2,14 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { IoMenuOutline, IoCloudOfflineOutline } from 'react-icons/io5';
 import Sidebar from './Sidebar';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
+import { useRealtimeStore } from '@/store/realtime.store';
+import Logo from '@/components/ui/Logo';
 
 interface Props {
   children: ReactNode;
@@ -16,7 +19,9 @@ export default function DashboardLayout({ children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { setUser, clearUser } = useAuthStore();
+  const connexionRealtime = useRealtimeStore((s) => s.connexion);
   const [ready, setReady] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -35,11 +40,18 @@ export default function DashboardLayout({ children }: Props) {
         setUser(user);
         setReady(true);
       } catch {
+        // Session expirée, token invalide ou serveur injoignable : on renvoie
+        // vers la page de connexion avec un message explicite (le toast est
+        // ré-affiché par le conteneur de la page de connexion).
+        toast.error('Session expirée. Veuillez vous reconnecter.');
         router.push('/');
       }
     };
     init();
   }, []);
+
+  // Note : le tiroir mobile se referme lui-même au clic sur un lien de
+  // navigation (onClick=onClose dans Sidebar) et sur le voile du fond.
 
   if (!ready) {
     return (
@@ -50,9 +62,35 @@ export default function DashboardLayout({ children }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen bg-neutral-0">
+    <div className="min-h-screen bg-neutral-0">
+      <AnimatePresence>{menuOpen && <Sidebar open onClose={() => setMenuOpen(false)} />}</AnimatePresence>
       <Sidebar />
-      <main className="flex-1 overflow-auto">
+
+      {/* Barre supérieure mobile : hamburger + marque */}
+      <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-primary-600 shadow-md">
+        <button
+          onClick={() => setMenuOpen(true)}
+          className="text-white/85 hover:text-white transition-colors p-1"
+          aria-label="Ouvrir le menu"
+        >
+          <IoMenuOutline size={24} />
+        </button>
+        <Logo tone="white" size={22} />
+      </header>
+
+      <main className="lg:pl-[248px]">
+        {connexionRealtime === 'deconnecte' && (
+          <div
+            role="status"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-amber-800 bg-amber-50 border-b border-amber-200"
+          >
+            <IoCloudOfflineOutline size={18} className="shrink-0" />
+            <span>
+              Connexion temps réel perdue : les positions affichées peuvent être
+              anciennes. Reconnexion automatique en cours…
+            </span>
+          </div>
+        )}
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}

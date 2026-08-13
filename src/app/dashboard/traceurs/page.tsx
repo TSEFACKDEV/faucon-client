@@ -10,6 +10,9 @@ import {
 import { adminService } from '@/services/admin.service';
 import { VehiculeResume } from '@/types';
 import { MODE_LABELS, formatDateTime, timeAgo, getBatteryColor } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/errors';
+import { useRealtime } from '@/hooks/useRealtime';
+import { useRealtimeStore } from '@/store/realtime.store';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -32,12 +35,31 @@ export default function TraceursPage() {
   const [deleting, setDeleting] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  // Temps réel : les colonnes État / Batterie / Dernière comm. se mettent à
+  // jour dès réception d'une trame, sans rafraîchir la liste.
+  const livePositions = useRealtimeStore((s) => s.positions);
+  const liveVehiculeIds = vehicules.map((v) => v.id);
+  useRealtime(liveVehiculeIds);
+
+  const vehiculesLive = vehicules.map((v) => {
+    const live = livePositions[v.id];
+    if (!live) return v;
+    return {
+      ...v,
+      latitude: live.latitude,
+      longitude: live.longitude,
+      niveauBatterie: live.battery,
+      derniereCommunication: live.horodatage,
+      enLigne: true,
+    };
+  });
+
   const load = useCallback(async () => {
     try {
       setVehicules(await adminService.getVehicules());
     } catch (err) {
       console.error('[Traceurs]', err);
-      toast.error('Impossible de charger les traceurs');
+      toast.error(getErrorMessage(err, 'Impossible de charger la liste des traceurs. Réessayez dans un instant.'));
     } finally {
       setLoading(false);
     }
@@ -58,7 +80,7 @@ export default function TraceursPage() {
       toast.success(v.estActif ? 'Traceur désactivé' : 'Traceur activé');
     } catch (err) {
       console.error('[toggle]', err);
-      toast.error('Impossible de modifier l\'état du traceur');
+      toast.error(getErrorMessage(err, 'Impossible de modifier l\'état du traceur. Réessayez dans un instant.'));
     } finally {
       setTogglingId(null);
     }
@@ -74,13 +96,13 @@ export default function TraceursPage() {
       toast.success('Traceur supprimé');
     } catch (err) {
       console.error('[supprimerVehicule]', err);
-      toast.error('Impossible de supprimer ce traceur');
+      toast.error(getErrorMessage(err, 'Impossible de supprimer ce traceur. Réessayez dans un instant.'));
     } finally {
       setDeleting(false);
     }
   };
 
-  const filtered = vehicules.filter((v) => {
+  const filtered = vehiculesLive.filter((v) => {
     const q = search.trim().toLowerCase();
     if (!q) return true;
     return (
@@ -105,7 +127,7 @@ export default function TraceursPage() {
         <div>
           <h1 className="text-2xl font-semibold text-neutral-900">Traceurs</h1>
           <p className="text-sm text-neutral-600 mt-1">
-            {vehicules.length} traceur(s) enregistré(s) — {vehicules.filter((v) => v.enLigne).length} en ligne
+            {vehiculesLive.length} traceur(s) enregistré(s) — {vehiculesLive.filter((v) => v.enLigne).length} en ligne
           </p>
         </div>
         <Link href="/dashboard/traceurs/provisionner">

@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   IoGridOutline, IoPeopleOutline, IoHardwareChipOutline,
-  IoWarningOutline, IoSettingsOutline, IoAddCircleOutline,
+  IoWarningOutline, IoSettingsOutline, IoAddCircleOutline, IoCloseOutline,
 } from 'react-icons/io5';
 import { useAuthStore } from '@/store/auth.store';
 import { useLogout } from '@/hooks/useLogout';
@@ -19,7 +19,12 @@ const NAV = [
   { href: '/dashboard/parametres',          label: 'Paramètres',   icon: IoSettingsOutline },
 ];
 
-export default function Sidebar() {
+interface Props {
+  open?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ open = false, onClose }: Props) {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const { handleLogout } = useLogout();
@@ -31,20 +36,27 @@ export default function Sidebar() {
     .toUpperCase()
     .slice(0, 2) ?? 'FA';
 
-  return (
-    <aside className="w-[248px] min-h-screen bg-primary-600 flex flex-col shrink-0">
-      <div className="px-6 pt-7 pb-5 border-b border-white/10">
+  const content = (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between px-6 pt-7 pb-5 border-b border-white/10">
         <Logo tone="white" size={26} />
+        <button
+          onClick={onClose}
+          className="lg:hidden text-white/70 hover:text-white transition-colors p-1"
+          aria-label="Fermer le menu"
+        >
+          <IoCloseOutline size={22} />
+        </button>
       </div>
 
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+      <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
         {NAV.map(({ href, label, icon: Icon }) => {
           const isActive = href === '/dashboard'
             ? pathname === '/dashboard'
             : pathname.startsWith(href);
 
           return (
-            <Link key={href} href={href} className="relative">
+            <Link key={href} href={href} onClick={onClose} className="relative">
               {isActive && (
                 <motion.span
                   layoutId="sidebar-active"
@@ -80,6 +92,35 @@ export default function Sidebar() {
           <p className="text-xs text-white/60">Administrateur</p>
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Version desktop : barre latérale fixe */}
+      <aside className="hidden lg:flex w-[248px] bg-primary-600 shrink-0 sticky top-0 h-screen">
+        {content}
+      </aside>
+
+      {/* Version mobile : tiroir + voile */}
+      {open && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={onClose}
+            aria-hidden
+          />
+          <motion.aside
+            initial={{ x: -280 }}
+            animate={{ x: 0 }}
+            exit={{ x: -280 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 34 }}
+            className="absolute left-0 top-0 h-full w-[268px] bg-primary-600 shadow-2xl"
+          >
+            {content}
+          </motion.aside>
+        </div>
+      )}
+    </>
   );
 }

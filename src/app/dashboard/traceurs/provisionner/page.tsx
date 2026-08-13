@@ -10,6 +10,7 @@ import {
 import { adminService } from '@/services/admin.service';
 import { VehiculeProvisionne } from '@/types';
 import { provisionSchema } from '@/lib/validations';
+import { getErrorMessage } from '@/lib/errors';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -38,7 +39,7 @@ export default function ProvisionnerPage() {
       }
       toast.success('Copié');
     } catch {
-      toast.error('Impossible de copier');
+      toast.error('Impossible de copier dans le presse-papiers. Vérifiez les autorisations du navigateur.');
     }
   };
 
@@ -85,8 +86,7 @@ export default function ProvisionnerPage() {
                 setCopiedId(null);
                 toast.success(`${result.length} traceur(s) provisionné(s)`);
               } catch (err: unknown) {
-                const e = err as { response?: { data?: { message?: string } } };
-                toast.error(e.response?.data?.message ?? 'Échec du provisioning');
+                toast.error(getErrorMessage(err, 'Échec du provisioning. Vérifiez la clé et le nombre demandé, puis réessayez.'));
                 setProvisioned([]);
                 setBatchId(null);
               } finally {

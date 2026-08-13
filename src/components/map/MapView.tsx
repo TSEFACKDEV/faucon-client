@@ -14,6 +14,8 @@ export interface MapMarkerData {
   longitude: number;
   label: string;
   color?: string;
+  // Halo pulsant autour du marqueur (traceur suivi / fraîchement reçu).
+  pulse?: boolean;
 }
 
 export interface MapRoutePoint {
@@ -27,25 +29,35 @@ interface Props {
   onMarkerClick?: (id: string) => void;
   route?: MapRoutePoint[];
   routeColor?: string;
+  // Id du marqueur à suivre : la carte recentre en continu sur son
+  // déplacement (mode « traque » temps réel), sans empêcher la navigation
+  // manuelle tant que le suivi est désactivé.
+  followId?: string | null;
 }
 
-const createMarker = (color: string, label: string) => {
+const createMarker = (color: string, label: string, pulse = false) => {
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="48" viewBox="0 0 40 48">
-      <circle cx="20" cy="20" r="18" fill="${color}" stroke="white" stroke-width="3"/>
-      <circle cx="20" cy="20" r="8" fill="white"/>
-      <polygon points="20,38 12,28 28,28" fill="${color}"/>
+      <defs>
+        <filter id="pin-shadow" x="-40%" y="-40%" width="180%" height="200%">
+          <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="rgba(0,0,0,0.28)"/>
+        </filter>
+      </defs>
+      <path d="M20 2c-8.8 0-16 7.2-16 16 0 12 16 28 16 28s16-16 16-28c0-8.8-7.2-16-16-16z"
+            fill="${color}" stroke="white" stroke-width="2.5" filter="url(#pin-shadow)"/>
+      <circle cx="20" cy="18" r="6.5" fill="white"/>
     </svg>
   `;
   return L.divIcon({
     html: `
       <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        ${pulse ? `<span class="map-pin-pulse" style="background:${color}"></span>` : ''}
         ${svg}
         <div style="
-          background:white;border:1px solid ${color};
-          border-radius:4px;padding:1px 6px;
+          background:rgba(255,255,255,0.95);border:1px solid ${color};
+          border-radius:6px;padding:2px 7px;
           font-size:10px;font-weight:700;color:${color};
-          white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.15)
+          white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.18)
         ">${label}</div>
       </div>
     `,
@@ -61,12 +73,14 @@ export default function MapView({
   onMarkerClick,
   route,
   routeColor = '#363F70',
+  followId = null,
 }: Props) {
   const mapRef     = useRef<L.Map | null>(null);
   const markersRef = useRef<Record<string, L.Marker>>({});
   const polylineRef = useRef<L.Polyline | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fitDoneRef = useRef(false);
+  const lastFollowRef = useRef<{ id: string; lat: number; lon: number } | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -93,6 +107,29 @@ export default function MapView({
     };
   }, []);
 
+  // Cadrage initial une seule fois (tous les cas : marqueurs seuls, ou
+  // route+marqueur de replay).
+  useEffect(() => {
+    if (!mapRef.current || fitDoneRef.current) return;
+    const map = mapRef.current;
+
+    const bounds = L.latLngBounds([]);
+    if (route && route.length > 0) {
+      route.forEach((p) => bounds.extend([p.latitude, p.longitude]));
+    }
+    if (markers.length > 0) {
+      markers.forEach((m) => bounds.extend([m.latitude, m.longitude]));
+    }
+
+    if (bounds.isValid()) {
+      fitDoneRef.current = true;
+      map.fitBounds(bounds, { padding: [60, 60], maxZoom: followId ? 15 : 14 });
+    }
+    // Cadrage volontairement "une seule fois" : `markers.length` suffit à le
+    // déclencher, on ne veut PAS re-cadrer à chaque déplacement de marqueur.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route, markers.length, followId]);
+
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current;
@@ -102,7 +139,8 @@ export default function MapView({
       activeIds.add(m.id);
       const isSelected = m.id === selectedId;
       const color = m.color ?? (isSelected ? '#363F70' : '#F2884D');
-      const icon  = createMarker(color, m.label);
+      const pulse = m.pulse === true || m.id === followId;
+      const icon  = createMarker(color, m.label, pulse);
       const latlng: L.LatLngTuple = [m.latitude, m.longitude];
 
       if (markersRef.current[m.id]) {
@@ -120,16 +158,21 @@ export default function MapView({
         delete markersRef.current[id];
       }
     });
+  }, [markers, selectedId, onMarkerClick, followId]);
 
-    // Cadrage automatique une seule fois, dès que des marqueurs arrivent —
-    // pas à chaque mise à jour, pour ne pas gêner un admin en train de
-    // naviguer sur la carte.
-    if (!fitDoneRef.current && markers.length > 0) {
-      fitDoneRef.current = true;
-      const bounds = L.latLngBounds(markers.map((m) => [m.latitude, m.longitude] as L.LatLngTuple));
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
-    }
-  }, [markers, selectedId, onMarkerClick]);
+  // Mode « suivi » : recentre en douceur sur le marqueur qui se déplace,
+  // sans zoomer/dézoomer (on garde le niveau de zoom choisi par l'admin).
+  useEffect(() => {
+    if (!mapRef.current || !followId) return;
+    const m = markers.find((x) => x.id === followId);
+    if (!m) return;
+
+    const last = lastFollowRef.current;
+    if (last && last.id === followId && last.lat === m.latitude && last.lon === m.longitude) return;
+
+    mapRef.current.panTo([m.latitude, m.longitude], { animate: true, duration: 0.6 });
+    lastFollowRef.current = { id: followId, lat: m.latitude, lon: m.longitude };
+  }, [markers, followId]);
 
   // Trajet (polyline) — recalculé à chaque changement du tracé.
   useEffect(() => {
@@ -153,21 +196,15 @@ export default function MapView({
     }
   }, [route, routeColor]);
 
-  // Cadrage sur le trajet quand il n'y a pas de marqueurs (replay seul).
-  useEffect(() => {
-    if (!mapRef.current || fitDoneRef.current) return;
-    if (route && route.length > 0 && markers.length === 0) {
-      fitDoneRef.current = true;
-      const bounds = L.latLngBounds(route.map((p) => [p.latitude, p.longitude] as L.LatLngTuple));
-      mapRef.current.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
-    }
-  }, [route, markers.length]);
-
   useEffect(() => {
     if (!mapRef.current || !selectedId) return;
     const m = markers.find((x) => x.id === selectedId);
     if (!m) return;
     mapRef.current.flyTo([m.latitude, m.longitude], 14, { duration: 1 });
+    // `markers` n'est consulté que pour lire la position du marqueur déjà
+    // sélectionné : on ne veut voler la carte que lors d'un CHANGEMENT de
+    // sélection, pas à chaque mise à jour temps réel du marqueur.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
   return (

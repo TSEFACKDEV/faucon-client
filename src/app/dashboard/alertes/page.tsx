@@ -10,6 +10,7 @@ import {
 import { adminService } from '@/services/admin.service';
 import { Alarme, AlarmType } from '@/types';
 import { ALARM_LABELS, formatDateTime, timeAgo, formatCoords } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/errors';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -46,7 +47,7 @@ export default function AlertesPage() {
       }));
     } catch (err) {
       console.error('[Alertes]', err);
-      toast.error('Impossible de charger les alarmes');
+      toast.error(getErrorMessage(err, 'Impossible de charger la liste des alarmes. Réessayez dans un instant.'));
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,7 @@ export default function AlertesPage() {
       toast.success('Alarme acquittée');
     } catch (err) {
       console.error('[acquit]', err);
-      toast.error('Impossible d\'acquitter cette alarme');
+      toast.error(getErrorMessage(err, 'Impossible d\'acquitter cette alarme. Réessayez dans un instant.'));
     } finally {
       setAcquitting(null);
     }
@@ -83,7 +84,7 @@ export default function AlertesPage() {
       toast.success('Alarme supprimée');
     } catch (err) {
       console.error('[delete]', err);
-      toast.error('Impossible de supprimer cette alarme');
+      toast.error(getErrorMessage(err, 'Impossible de supprimer cette alarme. Réessayez dans un instant.'));
     } finally {
       setDeleting(false);
     }
@@ -297,8 +298,8 @@ export default function AlertesPage() {
                     setAlarmes((prev) => prev.map((x) => (x.id === selected.id ? { ...x, estAcquittee: true } : x)));
                     setSelected((prev) => (prev ? { ...prev, estAcquittee: true } : prev));
                     toast.success('Alarme acquittée');
-                  } catch {
-                    toast.error('Impossible d\'acquitter');
+                  } catch (err) {
+                    toast.error(getErrorMessage(err, 'Impossible d\'acquitter cette alarme. Réessayez dans un instant.'));
                   }
                 }}
               >

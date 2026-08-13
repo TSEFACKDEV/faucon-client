@@ -7,12 +7,13 @@ import { motion } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { IoMailOutline, IoLockClosedOutline, IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
+import Image from 'next/image';
 import { loginSchema } from '@/lib/validations';
+import { getErrorMessage } from '@/lib/errors';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import Logo from '@/components/ui/Logo';
 
 interface LoginFormValues {
   email: string;
@@ -41,33 +42,32 @@ export default function LoginPage() {
       toast.success(`Bienvenue, ${user.userName}`);
       router.push('/dashboard');
     } catch (error: unknown) {
-      let message = 'Email ou mot de passe incorrect';
-      if (error && typeof error === 'object' && 'response' in error) {
-        const responseError = error as { response?: { data?: { message?: string } } };
-        if (responseError.response?.data?.message) message = responseError.response.data.message;
-      }
-      toast.error(message);
+      toast.error(getErrorMessage(error, 'Email ou mot de passe incorrect. Vérifiez vos identifiants et réessayez.'));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-0 relative overflow-hidden px-6">
-      {/* Fond doux — dégradé subtil, pas de texture agressive */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-neutral-0 to-neutral-0" />
-      <div className="absolute -top-40 -right-40 w-[520px] h-[520px] rounded-full bg-primary-100/40 blur-3xl" />
-      <div className="absolute -bottom-40 -left-40 w-[420px] h-[420px] rounded-full bg-accent-100/30 blur-3xl" />
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-6">
+      {/* Fond : dégradé de marque + quadrillé « tour de contrôle » très discret */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-700 to-primary-800" />
+      <div className="absolute inset-0 bg-blueprint opacity-[0.15]" />
+      <div className="absolute -top-48 -right-40 w-[560px] h-[560px] rounded-full bg-accent-500/25 blur-3xl animate-float-slow" />
+      <div className="absolute -bottom-48 -left-40 w-[460px] h-[460px] rounded-full bg-white/10 blur-3xl animate-float-slower" />
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="relative w-full max-w-md bg-white rounded-2xl shadow-[0_8px_40px_rgba(33,31,27,0.08)] border border-neutral-100 p-8 md:p-10"
+        className="relative w-full max-w-md bg-white/95 backdrop-blur rounded-2xl shadow-[0_24px_70px_rgba(9,11,26,0.45)] border border-white/60 p-8 md:p-10"
       >
         <div className="flex flex-col items-center gap-2 mb-8">
-          <Logo size={40} />
-          <p className="text-sm text-neutral-600 mt-1">Dashboard d&apos;administration</p>
+          <div className="w-14 h-14 rounded-2xl bg-primary-600 shadow-lg shadow-primary-600/30 flex items-center justify-center">
+            <Image src="/mark.png" alt="Faucon" width={30} height={30} />
+          </div>
+          <p className="text-sm font-semibold text-primary-600 mt-2 tracking-wide">FAUCON</p>
+          <p className="text-sm text-neutral-600 mt-1">Tour de contrôle des traceurs</p>
         </div>
 
         <Formik

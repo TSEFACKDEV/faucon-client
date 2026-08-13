@@ -9,6 +9,7 @@ import {
 import { authService } from '@/services/auth.service';
 import { User } from '@/types';
 import { formatDateTime } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/errors';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -42,7 +43,7 @@ export default function ParametresPage() {
       setTelephone(u.telephone ?? '');
     } catch (err) {
       console.error('[Parametres]', err);
-      toast.error('Impossible de charger le profil');
+      toast.error(getErrorMessage(err, 'Impossible de charger votre profil. Réessayez dans un instant.'));
     } finally {
       setLoading(false);
     }
@@ -63,8 +64,7 @@ export default function ParametresPage() {
       setUser(u);
       toast.success('Profil mis à jour');
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      toast.error(e.response?.data?.message ?? 'Impossible de mettre à jour le profil');
+      toast.error(getErrorMessage(err, 'Impossible de mettre à jour votre profil. Réessayez dans un instant.'));
     } finally {
       setSaving(false);
     }
@@ -76,7 +76,7 @@ export default function ParametresPage() {
       await authService.logout();
       window.location.href = '/';
     } catch {
-      toast.error('Erreur lors de la déconnexion');
+      toast.error('Impossible de vous déconnecter. Réessayez dans un instant.');
       setLogoutLoading(false);
     }
   };

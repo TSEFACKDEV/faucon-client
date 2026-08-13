@@ -17,7 +17,7 @@ const toneStyles = {
 export default function StatCard({ label, value, icon: Icon, tone = 'primary' }: Props) {
   const t = toneStyles[tone];
   return (
-    <div className="bg-white rounded-[14px] border border-neutral-100 shadow-[0_1px_3px_rgba(33,31,27,0.05)] p-5 flex items-center gap-4">
+    <div className="card-hover bg-white rounded-[14px] border border-neutral-100 shadow-[0_1px_3px_rgba(33,31,27,0.05)] p-5 flex items-center gap-4">
       <div className={`w-11 h-11 rounded-[12px] ${t.bg} flex items-center justify-center shrink-0`}>
         <Icon size={20} className={t.icon} />
       </div>

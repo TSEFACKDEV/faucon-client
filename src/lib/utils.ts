@@ -14,12 +14,16 @@ export const formatTime = (iso: string): string =>
 export const timeAgo = (iso: string): string =>
   formatDistanceToNow(new Date(iso), { locale: fr, addSuffix: true });
 
-// Cohérent avec isRecentlyConnected (mobile) : < 5 min depuis la dernière
-// communication ⇒ le traceur est considéré « en ligne ».
+// Même seuil que le backend (EN_LIGNE_SEUIL_MS = 10 min) : strictement
+// supérieur à la plus longue période d'émission du firmware (STANDBY à
+// l'arrêt : 5 min), pour qu'un traceur allumé ne bascule pas « hors ligne »
+// entre deux trames. Ne PAS descendre sous 5 min.
+const EN_LIGNE_SEUIL_MS = 10 * 60 * 1000;
+
 export const isOnline = (derniereCommunication?: string | null): boolean => {
   if (!derniereCommunication) return false;
   const delta = Date.now() - new Date(derniereCommunication).getTime();
-  return delta >= 0 && delta < 5 * 60 * 1000;
+  return delta >= 0 && delta < EN_LIGNE_SEUIL_MS;
 };
 
 export const formatCoords = (lat: number, lon: number): string =>

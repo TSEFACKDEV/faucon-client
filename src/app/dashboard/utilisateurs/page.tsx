@@ -10,6 +10,7 @@ import { adminService } from '@/services/admin.service';
 import { UtilisateurResume, UtilisateurDetail, Role } from '@/types';
 import { createUserSchema } from '@/lib/validations';
 import { formatDate } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/errors';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -41,7 +42,7 @@ export default function UtilisateursPage() {
       setUtilisateurs(await adminService.getUtilisateurs());
     } catch (err) {
       console.error('[Utilisateurs]', err);
-      toast.error('Impossible de charger les utilisateurs');
+      toast.error(getErrorMessage(err, 'Impossible de charger la liste des utilisateurs. Réessayez dans un instant.'));
     } finally {
       setLoading(false);
     }
@@ -62,7 +63,7 @@ export default function UtilisateursPage() {
       toast.success('Rôle mis à jour');
     } catch (err) {
       console.error('[setRole]', err);
-      toast.error('Impossible de changer le rôle');
+      toast.error(getErrorMessage(err, 'Impossible de changer le rôle de cet utilisateur. Réessayez dans un instant.'));
     } finally {
       setRoleSaving(null);
     }
@@ -78,7 +79,7 @@ export default function UtilisateursPage() {
       toast.success('Utilisateur supprimé');
     } catch (err) {
       console.error('[supprimerUtilisateur]', err);
-      toast.error('Impossible de supprimer cet utilisateur');
+      toast.error(getErrorMessage(err, 'Impossible de supprimer cet utilisateur. Réessayez dans un instant.'));
     } finally {
       setDeleting(false);
     }
@@ -89,7 +90,7 @@ export default function UtilisateursPage() {
       setDetail(await adminService.getUtilisateurById(id));
     } catch (err) {
       console.error('[detail]', err);
-      toast.error('Impossible de charger le détail');
+      toast.error(getErrorMessage(err, 'Impossible de charger le détail de cet utilisateur. Réessayez dans un instant.'));
     }
   };
 
@@ -228,8 +229,7 @@ export default function UtilisateursPage() {
               setCreating(false);
               load();
             } catch (err: unknown) {
-              const e = err as { response?: { data?: { message?: string } } };
-              toast.error(e.response?.data?.message ?? 'Impossible de créer l\'utilisateur');
+              toast.error(getErrorMessage(err, 'Impossible de créer cet utilisateur. Vérifiez les informations saisies, puis réessayez.'));
             } finally {
               setSubmitting(false);
             }
