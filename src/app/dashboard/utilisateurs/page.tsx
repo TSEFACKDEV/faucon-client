@@ -7,6 +7,7 @@ import {
   IoPeopleOutline, IoAddOutline, IoTrashOutline, IoEyeOutline, IoSearchOutline,
 } from 'react-icons/io5';
 import { adminService } from '@/services/admin.service';
+import { useAuthStore } from '@/store/auth.store';
 import { UtilisateurResume, UtilisateurDetail, Role } from '@/types';
 import { createUserSchema } from '@/lib/validations';
 import { formatDate } from '@/lib/utils';
@@ -28,6 +29,7 @@ const item = {
 };
 
 export default function UtilisateursPage() {
+  const { user: currentUser } = useAuthStore();
   const [utilisateurs, setUtilisateurs] = useState<UtilisateurResume[]>([]);
   const [detail, setDetail] = useState<UtilisateurDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +37,10 @@ export default function UtilisateursPage() {
   const [toDelete, setToDelete] = useState<UtilisateurResume | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [roleSaving, setRoleSaving] = useState<string | null>(null);
+  // Changement de rôle demandé mais pas encore confirmé — un changement de
+  // droits ADMIN/UTILISATEUR est sensible (accès complet à la plateforme),
+  // il ne doit pas partir d'un simple clic accidentel sur le menu déroulant.
+  const [roleChange, setRoleChange] = useState<{ user: UtilisateurResume; role: Role } | null>(null);
   const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
@@ -169,10 +175,17 @@ export default function UtilisateursPage() {
                       <td className="px-6 py-3.5">
                         {roleSaving === u.id ? (
                           <span className="text-xs text-neutral-500">Enregistrement…</span>
+                        ) : u.id === currentUser?.id ? (
+                          <span
+                            className="rounded-full text-xs font-semibold px-3 py-1 bg-primary-50 text-primary-600 border border-primary-200 cursor-not-allowed"
+                            title="Vous ne pouvez pas changer votre propre rôle"
+                          >
+                            Admin (vous)
+                          </span>
                         ) : (
                           <select
                             value={u.role}
-                            onChange={(e) => handleRoleChange(u, e.target.value as Role)}
+                            onChange={(e) => setRoleChange({ user: u, role: e.target.value as Role })}
                             className={`
                               rounded-full text-xs font-semibold px-3 py-1 cursor-pointer border focus:outline-none
                               ${u.role === 'ADMIN'
@@ -334,6 +347,41 @@ export default function UtilisateursPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* ── Confirmation changement de rôle ── */}
+      <Modal
+        open={!!roleChange}
+        onClose={() => setRoleChange(null)}
+        title="Changer le rôle de cet utilisateur ?"
+        subtitle={roleChange?.user.userName}
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-neutral-600">
+            {roleChange?.user.userName} passera du rôle{' '}
+            <strong>{roleChange?.user.role === 'ADMIN' ? 'Administrateur' : 'Utilisateur'}</strong> à{' '}
+            <strong>{roleChange?.role === 'ADMIN' ? 'Administrateur' : 'Utilisateur'}</strong>.
+            {roleChange?.role === 'ADMIN' && ' Il aura alors accès à ce tableau de bord et à toutes les données de la plateforme.'}
+          </p>
+          <div className="flex gap-3">
+            <Button variant="ghost" fullWidth onClick={() => setRoleChange(null)}>
+              Annuler
+            </Button>
+            <Button
+              variant="primary"
+              fullWidth
+              loading={!!roleChange && roleSaving === roleChange.user.id}
+              onClick={async () => {
+                if (!roleChange) return;
+                const { user, role } = roleChange;
+                setRoleChange(null);
+                await handleRoleChange(user, role);
+              }}
+            >
+              Confirmer
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       {/* ── Confirmation suppression ── */}

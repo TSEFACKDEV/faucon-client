@@ -1,12 +1,7 @@
 import api from '@/lib/axios';
-import Cookies from 'js-cookie';
+import { setAuthCookies, getAccessToken, getRefreshToken, clearAuthCookies } from '@/lib/authCookies';
+import { broadcastAuthChange } from '@/lib/authBroadcast';
 import { AuthResponse, User, ApiResponse } from '@/types';
-
-const COOKIE_OPTIONS = {
-  expires: 7,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-};
 
 export const authService = {
   login: async (
@@ -18,18 +13,18 @@ export const authService = {
       password,
     });
     const result = data.data!;
-    Cookies.set('faucon_access_token', result.tokens.accessToken, COOKIE_OPTIONS);
-    Cookies.set('faucon_refresh_token', result.tokens.refreshToken, COOKIE_OPTIONS);
+    setAuthCookies(result.tokens.accessToken, result.tokens.refreshToken);
+    broadcastAuthChange('login');
     return result;
   },
 
   logout: async (): Promise<void> => {
-    const refreshToken = Cookies.get('faucon_refresh_token');
+    const refreshToken = getRefreshToken();
     try {
       await api.post('/auth/logout', { refreshToken });
     } finally {
-      Cookies.remove('faucon_access_token');
-      Cookies.remove('faucon_refresh_token');
+      clearAuthCookies();
+      broadcastAuthChange('logout');
     }
   },
 
@@ -48,6 +43,17 @@ export const authService = {
   },
 
   isAuthenticated: (): boolean => {
-    return !!Cookies.get('faucon_access_token');
+    return !!getAccessToken();
+  },
+
+  // Ce dashboard est réservé au rôle ADMIN. Centralisé ici plutôt que
+  // dupliqué (page de connexion + layout du dashboard appliquaient
+  // auparavant la même règle séparément, avec un risque de divergence) :
+  // déconnecte immédiatement (retire les cookies fraîchement posés) et
+  // renvoie `false` si l'utilisateur connecté n'est pas admin.
+  ensureAdmin: async (user: User): Promise<boolean> => {
+    if (user.role === 'ADMIN') return true;
+    await authService.logout();
+    return false;
   },
 };

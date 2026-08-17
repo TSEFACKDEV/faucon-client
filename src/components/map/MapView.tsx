@@ -72,7 +72,7 @@ export default function MapView({
   selectedId = null,
   onMarkerClick,
   route,
-  routeColor = '#363F70',
+  routeColor = '#0057FF',
   followId = null,
 }: Props) {
   const mapRef     = useRef<L.Map | null>(null);
@@ -138,7 +138,7 @@ export default function MapView({
     markers.forEach((m) => {
       activeIds.add(m.id);
       const isSelected = m.id === selectedId;
-      const color = m.color ?? (isSelected ? '#363F70' : '#F2884D');
+      const color = m.color ?? (isSelected ? '#0057FF' : '#00C2FF');
       const pulse = m.pulse === true || m.id === followId;
       const icon  = createMarker(color, m.label, pulse);
       const latlng: L.LatLngTuple = [m.latitude, m.longitude];
@@ -210,7 +210,7 @@ export default function MapView({
   return (
     <div
       ref={containerRef}
-      style={{ width: '100%', height: '100%', background: '#F3F1EE' }}
+      style={{ width: '100%', height: '100%', background: '#EDF2FA' }}
     />
   );
 }

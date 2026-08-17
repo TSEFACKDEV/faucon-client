@@ -10,8 +10,10 @@ export interface TracePoint {
 
 // État de la connexion temps réel : `inconnu` avant la première tentative
 // (aucune bannière), `connecte` une fois le flux actif, `deconnecte` quand le
-// flux est perdu (bannière visible).
-export type ConnexionRealtime = 'inconnu' | 'connecte' | 'deconnecte';
+// flux est perdu mais qu'une reconnexion auto est encore en cours (bannière
+// visible), `echec` quand les tentatives de reconnexion auto sont épuisées
+// (bannière avec action de reconnexion manuelle).
+export type ConnexionRealtime = 'inconnu' | 'connecte' | 'deconnecte' | 'echec';
 
 // Nombre maximum de points conservés par trace temps réel (le tracé reste
 // léger, la suite de l'historique vient de la base via le REST).

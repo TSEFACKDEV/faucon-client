@@ -72,6 +72,7 @@ export interface VehiculeResume {
   nom: string;
   modeActuel: DeviceMode;
   niveauBatterie: number;
+  niveauSignal?: number | null;
   estActif: boolean;
   dateAjout: string;
   derniereCommunication?: string | null;
@@ -91,6 +92,7 @@ export interface VehiculeDetail {
   telephoneAlerte?: string | null;
   modeActuel: DeviceMode;
   niveauBatterie: number;
+  niveauSignal?: number | null;
   estActif: boolean;
   dateAjout: string;
   derniereCommunication?: string | null;

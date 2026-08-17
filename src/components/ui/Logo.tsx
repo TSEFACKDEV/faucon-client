@@ -7,22 +7,21 @@ interface Props {
   className?: string;
 }
 
-// Même mark que l'app mobile (mobile/assets/mark.png) — pas le logo vert/
-// ambre historique (retiré de public/) qui appartenait à une identité
-// visuelle abandonnée.
+// Même mark que l'app mobile (mobile/assets/logo/falcon-mark-*.png) : un
+// faucon en piqué, ailes en flèche, dessiné pour ce projet. Deux
+// déclinaisons comme côté mobile — dégradé marine→bleu→cyan pour les fonds
+// clairs (tone="color"), blanc uni pour les fonds sombres/dégradés
+// (tone="white"), où le dégradé se fondrait sinon dans l'arrière-plan.
 export default function Logo({ tone = 'color', size = 28, showWordmark = true, className = '' }: Props) {
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
-      {tone === 'white' ? (
-        <div
-          className="flex items-center justify-center rounded-full bg-white"
-          style={{ width: size * 1.35, height: size * 1.35 }}
-        >
-          <Image src="/mark.png" alt="Faucon" width={size} height={size} style={{ width: size, height: size }} />
-        </div>
-      ) : (
-        <Image src="/mark.png" alt="Faucon" width={size} height={size} style={{ width: size, height: size }} />
-      )}
+      <Image
+        src={tone === 'white' ? '/mark-white.png' : '/mark.png'}
+        alt="Faucon"
+        width={size}
+        height={size}
+        style={{ width: size, height: size }}
+      />
       {showWordmark && (
         <span
           className={`font-bold tracking-[0.05em] ${tone === 'white' ? 'text-white' : 'text-primary-600'}`}

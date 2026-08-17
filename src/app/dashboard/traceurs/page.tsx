@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -9,9 +9,10 @@ import {
 } from 'react-icons/io5';
 import { adminService } from '@/services/admin.service';
 import { VehiculeResume } from '@/types';
-import { MODE_LABELS, formatDateTime, timeAgo, getBatteryColor } from '@/lib/utils';
+import { MODE_LABELS, formatDateTime, timeAgo, getBatteryColor, isOnline } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/errors';
 import { useRealtime } from '@/hooks/useRealtime';
+import { useTick } from '@/hooks/useTick';
 import { useRealtimeStore } from '@/store/realtime.store';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -40,8 +41,15 @@ export default function TraceursPage() {
   const livePositions = useRealtimeStore((s) => s.positions);
   const liveVehiculeIds = vehicules.map((v) => v.id);
   useRealtime(liveVehiculeIds);
+  // isOnline(derniereCommunication) est dérivé de Date.now() — sans ce tick,
+  // "En ligne" ne se réévaluerait que si CE traceur reçoit une nouvelle
+  // trame, et resterait affiché indéfiniment après qu'il ait cessé d'émettre.
+  useTick();
 
-  const vehiculesLive = vehicules.map((v) => {
+  // Mémoïsé comme sur dashboard/page.tsx et traceurs/[id]/page.tsx : sans ça,
+  // un nouveau tableau est recréé à chaque rendu (y compris ceux déclenchés
+  // par des états sans rapport, ex. un filtre de recherche tapé au clavier).
+  const vehiculesLive = useMemo(() => vehicules.map((v) => {
     const live = livePositions[v.id];
     if (!live) return v;
     return {
@@ -49,10 +57,10 @@ export default function TraceursPage() {
       latitude: live.latitude,
       longitude: live.longitude,
       niveauBatterie: live.battery,
+      niveauSignal: live.signal ?? v.niveauSignal,
       derniereCommunication: live.horodatage,
-      enLigne: true,
     };
-  });
+  }), [vehicules, livePositions]);
 
   const load = useCallback(async () => {
     try {
@@ -127,7 +135,7 @@ export default function TraceursPage() {
         <div>
           <h1 className="text-2xl font-semibold text-neutral-900">Traceurs</h1>
           <p className="text-sm text-neutral-600 mt-1">
-            {vehiculesLive.length} traceur(s) enregistré(s) — {vehiculesLive.filter((v) => v.enLigne).length} en ligne
+            {vehiculesLive.length} traceur(s) enregistré(s) — {vehiculesLive.filter((v) => isOnline(v.derniereCommunication, v.niveauSignal, v.niveauBatterie)).length} en ligne
           </p>
         </div>
         <Link href="/dashboard/traceurs/provisionner">
@@ -222,8 +230,8 @@ export default function TraceursPage() {
                         </td>
                         <td className="px-6 py-3.5">
                           <div className="flex flex-col gap-1">
-                            <Badge color={v.enLigne ? 'success' : 'neutral'} dot>
-                              {v.enLigne ? 'En ligne' : 'Hors ligne'}
+                            <Badge color={isOnline(v.derniereCommunication, v.niveauSignal, v.niveauBatterie) ? 'success' : 'neutral'} dot>
+                              {isOnline(v.derniereCommunication, v.niveauSignal, v.niveauBatterie) ? 'En ligne' : 'Hors ligne'}
                             </Badge>
                             <Badge color={v.estActif ? 'primary' : 'warning'}>
                               {v.estActif ? 'Actif' : 'Désactivé'}

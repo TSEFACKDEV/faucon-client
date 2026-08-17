@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import {
@@ -8,9 +8,10 @@ import {
 import dynamic from 'next/dynamic';
 import { adminService } from '@/services/admin.service';
 import { StatsOverview, VehiculeResume } from '@/types';
-import { ALARM_LABELS, MODE_LABELS } from '@/lib/utils';
+import { ALARM_LABELS, MODE_LABELS, isOnline } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/errors';
 import { useRealtime } from '@/hooks/useRealtime';
+import { useTick } from '@/hooks/useTick';
 import { useRealtimeStore } from '@/store/realtime.store';
 import Card from '@/components/ui/Card';
 import StatCard from '@/components/ui/StatCard';
@@ -42,8 +43,16 @@ export default function DashboardPage() {
   const livePositions = useRealtimeStore((s) => s.positions);
   const liveVehiculeIds = vehicules.map((v) => v.id);
   useRealtime(liveVehiculeIds);
+  // isOnline(derniereCommunication) est dérivé de Date.now() — sans ce tick,
+  // un traceur qui cesse d'émettre resterait affiché "en ligne" (et visible
+  // sur la carte) indéfiniment, jusqu'au prochain rechargement de page.
+  const tick = useTick();
 
-  const vehiculesLive = vehicules.map((v) => {
+  // Mémoïsé sur les données réelles (vehicules, livePositions) plutôt que
+  // recréé à chaque rendu : passé tel quel à MapView, un nouveau tableau à
+  // chaque fois déclenche inutilement le recalcul complet des icônes Leaflet
+  // (voir MapView.tsx) même quand rien n'a changé.
+  const vehiculesLive = useMemo(() => vehicules.map((v) => {
     const live = livePositions[v.id];
     if (!live) return v;
     return {
@@ -51,10 +60,10 @@ export default function DashboardPage() {
       latitude: live.latitude,
       longitude: live.longitude,
       niveauBatterie: live.battery,
+      niveauSignal: live.signal ?? v.niveauSignal,
       derniereCommunication: live.horodatage,
-      enLigne: true,
     };
-  });
+  }), [vehicules, livePositions]);
 
   useEffect(() => {
     const load = async () => {
@@ -75,9 +84,27 @@ export default function DashboardPage() {
     load();
   }, []);
 
-  const enLigneAvecPosition = vehiculesLive.filter(
-    (v) => v.enLigne && v.latitude != null && v.longitude != null
+  // Dépend explicitement de `tick` : isOnline() est une fonction du temps,
+  // ce recalcul périodique volontaire est ce qui permet à un traceur de
+  // basculer "hors ligne" ici sans attendre un événement non lié.
+  const enLigneAvecPosition = useMemo(
+    () => vehiculesLive.filter(
+      (v) => isOnline(v.derniereCommunication, v.niveauSignal, v.niveauBatterie) && v.latitude != null && v.longitude != null
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [vehiculesLive, tick]
   );
+
+  const mapMarkers = useMemo(() => enLigneAvecPosition.map((v) => ({
+    id: v.id,
+    latitude: v.latitude as number,
+    longitude: v.longitude as number,
+    label: v.nom,
+    color: '#0057FF',
+    // Halo pulsant sur les traceurs qui viennent de transmettre une trame
+    // en temps réel.
+    pulse: !!livePositions[v.id],
+  })), [enLigneAvecPosition, livePositions]);
 
   if (loading) {
     return (
@@ -119,18 +146,7 @@ export default function DashboardPage() {
           </div>
           <div className="h-[360px]">
             {enLigneAvecPosition.length > 0 ? (
-              <MapView
-                markers={enLigneAvecPosition.map((v) => ({
-                  id: v.id,
-                  latitude: v.latitude as number,
-                  longitude: v.longitude as number,
-                  label: v.nom,
-                  color: '#2563EB',
-                  // Halo pulsant sur les traceurs qui viennent de transmettre
-                  // une trame en temps réel.
-                  pulse: !!livePositions[v.id],
-                }))}
-              />
+              <MapView markers={mapMarkers} />
             ) : (
               <div className="h-full flex items-center justify-center text-sm text-neutral-500">
                 Aucun traceur en ligne pour le moment
@@ -158,7 +174,7 @@ export default function DashboardPage() {
           <h2 className="text-base font-semibold text-neutral-900 mb-1">Alarmes par type</h2>
           <p className="text-xs text-neutral-600 mb-3">Toutes périodes confondues</p>
           <CategoryBarChart
-            color="#B23434"
+            color="#B91C1C"
             data={stats.alarmesParType.map((a) => ({
               key: a.type, label: ALARM_LABELS[a.type], total: a.total,
             }))}
@@ -169,7 +185,7 @@ export default function DashboardPage() {
           <h2 className="text-base font-semibold text-neutral-900 mb-1">Répartition des modes</h2>
           <p className="text-xs text-neutral-600 mb-3">Tous les traceurs</p>
           <CategoryBarChart
-            color="#363F70"
+            color="#0057FF"
             data={stats.repartitionModes.map((m) => ({
               key: m.mode, label: MODE_LABELS[m.mode], total: m.total,
             }))}

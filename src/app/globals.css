@@ -12,30 +12,30 @@
   html, body {
     height: 100%;
     font-family: "Inter", system-ui, sans-serif;
-    background-color: #FAF9F7;
-    color: #211F1B;
+    background-color: #F5F8FC;
+    color: #0B1526;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
-  /* Fond subtilement dégradé : lumière douce en haut, tons chauds en bas —
+  /* Fond subtilement dégradé : lueur bleue en haut, cyan discret en bas —
    * sert de base au dashboard (les cartes blanches ressortent dessus). */
   body {
     background-image:
-      radial-gradient(1000px 500px at 85% -10%, rgba(182, 190, 221, 0.28), transparent 60%),
-      radial-gradient(900px 480px at -10% 110%, rgba(242, 136, 77, 0.10), transparent 55%);
+      radial-gradient(1000px 500px at 85% -10%, rgba(159, 194, 255, 0.28), transparent 60%),
+      radial-gradient(900px 480px at -10% 110%, rgba(0, 194, 255, 0.10), transparent 55%);
     background-attachment: fixed;
   }
 
   ::selection {
-    background: #B3BADD;
-    color: #161A33;
+    background: #9FC2FF;
+    color: #001A44;
   }
 
   /* Accessibilité clavier : anneau visible mais discret sur les éléments
    * interactifs, dans la couleur de la marque. */
   :where(a, button, input, select, textarea, [role="button"]):focus-visible {
-    outline: 2px solid #363F70;
+    outline: 2px solid #0057FF;
     outline-offset: 2px;
     border-radius: 6px;
   }
@@ -57,8 +57,8 @@
   /* Fond quadrillé discret façon "tour de contrôle" */
   .bg-blueprint {
     background-image:
-      linear-gradient(to right, rgba(54, 63, 112, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(54, 63, 112, 0.05) 1px, transparent 1px);
+      linear-gradient(to right, rgba(0, 87, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 87, 255, 0.05) 1px, transparent 1px);
     background-size: 28px 28px;
   }
 
@@ -68,8 +68,8 @@
   }
   .card-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(33, 31, 27, 0.08);
-    border-color: #D9DDEE;
+    box-shadow: 0 10px 30px rgba(11, 21, 38, 0.08);
+    border-color: #CFE0FF;
   }
 }
 
@@ -83,53 +83,25 @@
   0%, 100% { transform: translate(0, 0) scale(1); }
   50%      { transform: translate(-30px, 24px) scale(1.05); }
 }
-@keyframes ping-ring {
-  0%   { transform: scale(1); opacity: 0.7; }
-  100% { transform: scale(2.4); opacity: 0; }
-}
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.45; transform: scale(0.85); }
-}
-
 .animate-float-slow  { animation: float-slow 16s ease-in-out infinite; }
 .animate-float-slower { animation: float-slower 22s ease-in-out infinite; }
-.animate-shimmer {
-  background-size: 200% 100%;
-  animation: shimmer 2.4s linear infinite;
-}
-.animate-pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
-
-/* Halo "en ligne" qui pulse doucement autour des pastilles */
-.dot-online-ring::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: inherit;
-  animation: ping-ring 2s ease-out infinite;
-}
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #D7D2CA; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #B8B2A8; }
+::-webkit-scrollbar-thumb { background: #C9D3E3; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #A8B4C9; }
 
 /* Toast override */
 .Toastify__toast {
   border-radius: 12px !important;
   font-family: "Inter", system-ui, sans-serif !important;
   font-size: 14px !important;
-  box-shadow: 0 8px 30px rgba(33, 31, 27, 0.12) !important;
+  box-shadow: 0 8px 30px rgba(11, 21, 38, 0.12) !important;
 }
 
 /* Leaflet fix */
-.leaflet-container { height: 100%; width: 100%; background: #F3F1EE; }
+.leaflet-container { height: 100%; width: 100%; background: #EDF2FA; }
 .leaflet-tile-pane { filter: saturate(0.72) brightness(1.05) contrast(0.98); }
 
 /* Halo pulsant autour de l'épingle de la carte (traceur suivi en temps réel).

@@ -20,8 +20,17 @@ export const timeAgo = (iso: string): string =>
 // entre deux trames. Ne PAS descendre sous 5 min.
 const EN_LIGNE_SEUIL_MS = 10 * 60 * 1000;
 
-export const isOnline = (derniereCommunication?: string | null): boolean => {
+// MÊME RÈGLE QUE : mobile/src/utils/formatters.ts isDeviceOffline. À tenir
+// identique partout — sinon un traceur mourant (dernier sursaut
+// batterie/signal) peut s'afficher "En ligne" ici alors que le mobile le
+// signale déjà "Hors ligne", sur un produit dont c'est la fonction critique.
+export const isOnline = (
+  derniereCommunication?: string | null,
+  niveauSignal?: number | null,
+  niveauBatterie?: number | null
+): boolean => {
   if (!derniereCommunication) return false;
+  if (niveauSignal != null && niveauSignal < 12 && niveauBatterie === 0) return false;
   const delta = Date.now() - new Date(derniereCommunication).getTime();
   return delta >= 0 && delta < EN_LIGNE_SEUIL_MS;
 };
@@ -33,9 +42,9 @@ export const formatSpeed = (speed: number): string =>
   `${Math.round(speed)} km/h`;
 
 export const getBatteryColor = (level: number): string => {
-  if (level <= 20) return '#B23434';   // danger-strong
-  if (level <= 50) return '#8A5E10';   // warning-strong
-  return '#1F7A50';                    // success-strong
+  if (level <= 20) return '#B91C1C';   // danger-strong
+  if (level <= 50) return '#B45309';   // warning-strong
+  return '#15803D';                    // success-strong
 };
 
 export const ALARM_LABELS: Record<AlarmType, string> = {
@@ -47,11 +56,11 @@ export const ALARM_LABELS: Record<AlarmType, string> = {
 };
 
 export const ALARM_COLORS: Record<AlarmType, string> = {
-  SORTIE_ZONE:         '#B23434',
-  VITESSE_EXCESSIVE:   '#8A5E10',
-  DECOLLEMENT_TRACEUR: '#B23434',
-  NON_MOUVEMENT:       '#8A5E10',
-  BATTERIE_FAIBLE:     '#8A5E10',
+  SORTIE_ZONE:         '#B91C1C',
+  VITESSE_EXCESSIVE:   '#B45309',
+  DECOLLEMENT_TRACEUR: '#B91C1C',
+  NON_MOUVEMENT:       '#B45309',
+  BATTERIE_FAIBLE:     '#B45309',
 };
 
 export const MODE_LABELS: Record<DeviceMode, string> = {

@@ -18,6 +18,7 @@ import {
 } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/errors';
 import { useRealtime } from '@/hooks/useRealtime';
+import { useTick } from '@/hooks/useTick';
 import { useRealtimeStore } from '@/store/realtime.store';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -56,6 +57,12 @@ export default function TraceurDetailPage() {
   const [telephone, setTelephone] = useState('');
   const [configuring, setConfiguring] = useState<string | null>(null);
 
+  // isOnline(derniereCommunication) est dérivé de Date.now() — sans ce tick,
+  // le badge "En ligne" ne se réévalue que si CE traceur reçoit une nouvelle
+  // trame temps réel, et resterait donc affiché "En ligne" indéfiniment s'il
+  // cesse d'émettre (voir hooks/useTick.ts).
+  const tick = useTick();
+
   // Traque temps réel : les trames reçues étendent la trace et déplacent le
   // marqueur. Le « suivi » (recentrage automatique de la carte) est activé
   // par défaut dès qu'un point live arrive.
@@ -87,7 +94,11 @@ export default function TraceurDetailPage() {
     };
     const positions = [
       ...base.positions.filter((p) => p.horodatage !== livePosition.horodatage),
-      ...(liveTrace ?? []).map(
+      // `liveTrace` (store temps réel) et `livePoint` partagent la même
+      // dernière trame (voir realtime.store.ts : setPosition écrit les deux
+      // à partir de la même donnée `p`) — sans ce filtre, le point courant
+      // apparaît deux fois dans `positions` (bruit sur le tracé/compteurs).
+      ...(liveTrace ?? []).filter((t) => t.horodatage !== livePosition.horodatage).map(
         (t): Position => ({
           id: 0,
           vehiculeId: base.id,
@@ -107,6 +118,7 @@ export default function TraceurDetailPage() {
       ...base,
       positions,
       niveauBatterie: livePosition.battery,
+      niveauSignal: livePosition.signal ?? base.positions[0]?.niveauSignal ?? undefined,
       derniereCommunication: livePosition.horodatage,
     };
   }, [vehicule, livePosition, liveTrace]);
@@ -147,6 +159,38 @@ export default function TraceurDetailPage() {
       .map((p) => ({ latitude: p.latitude, longitude: p.longitude }));
   }, [vehiculeLive]);
 
+  // Le tableau `positions` n'est PAS garanti trié dans un ordre stable : le
+  // serveur le renvoie en DESC (le plus récent en premier), sauf quand un
+  // point temps réel est fusionné dedans (ajouté en dernier, voir
+  // `vehiculeLive` plus haut) — `[length - 1]` donnait donc tantôt le plus
+  // ancien, tantôt le plus récent selon qu'une trame live était déjà
+  // arrivée. On calcule explicitement le point au plus grand horodatage.
+  // Mémoïsé (comme `route`) avant les `return` anticipés ci-dessous, pour
+  // respecter les Rules of Hooks (un hook ne peut pas suivre un retour
+  // conditionnel).
+  const dernierPoint = useMemo(() => {
+    if (!vehiculeLive) return undefined;
+    return vehiculeLive.positions.reduce<Position | undefined>(
+      (latest, p) => (!latest || new Date(p.horodatage).getTime() > new Date(latest.horodatage).getTime() ? p : latest),
+      undefined
+    );
+  }, [vehiculeLive]);
+
+  // Mémoïsé pour la même raison que `mapMarkers` dans dashboard/page.tsx :
+  // un nouveau tableau à chaque rendu ferait recalculer inutilement les
+  // icônes Leaflet dans MapView à chaque tick (voir useTick ci-dessus).
+  const mapMarkers = useMemo(() => {
+    if (!vehiculeLive || !dernierPoint) return [];
+    return [{
+      id: vehiculeLive.id,
+      latitude: dernierPoint.latitude,
+      longitude: dernierPoint.longitude,
+      label: vehiculeLive.nom,
+      color: isOnline(vehiculeLive.derniereCommunication, vehiculeLive.niveauSignal, vehiculeLive.niveauBatterie) ? '#0057FF' : '#B91C1C',
+    }];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehiculeLive, dernierPoint, tick]);
+
   const send = async (codeCommande: CodeCommande, valeur?: string) => {
     if (!vehicule) return;
     setSending(codeCommande);
@@ -184,7 +228,6 @@ export default function TraceurDetailPage() {
   }
 
   const batColor = getBatteryColor(vehiculeLive.niveauBatterie);
-  const dernierPoint = vehiculeLive.positions[vehiculeLive.positions.length - 1];
 
   return (
     <motion.div
@@ -206,8 +249,8 @@ export default function TraceurDetailPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-semibold text-neutral-900">{vehiculeLive.nom}</h1>
-              <Badge color={isOnline(vehiculeLive.derniereCommunication) ? 'success' : 'neutral'} dot>
-                {isOnline(vehiculeLive.derniereCommunication) ? 'En ligne' : 'Hors ligne'}
+              <Badge color={isOnline(vehiculeLive.derniereCommunication, vehiculeLive.niveauSignal, vehiculeLive.niveauBatterie) ? 'success' : 'neutral'} dot>
+                {isOnline(vehiculeLive.derniereCommunication, vehiculeLive.niveauSignal, vehiculeLive.niveauBatterie) ? 'En ligne' : 'Hors ligne'}
               </Badge>
               <Badge color={vehiculeLive.estActif ? 'primary' : 'warning'}>
                 {vehiculeLive.estActif ? 'Actif' : 'Désactivé'}
@@ -258,15 +301,9 @@ export default function TraceurDetailPage() {
               <div className="h-[380px]">
                 {dernierPoint ? (
                   <MapView
-                    markers={[{
-                      id: vehiculeLive.id,
-                      latitude: dernierPoint.latitude,
-                      longitude: dernierPoint.longitude,
-                      label: vehiculeLive.nom,
-                      color: isOnline(vehiculeLive.derniereCommunication) ? '#2563EB' : '#B23434',
-                    }]}
+                    markers={mapMarkers}
                     route={route}
-                    routeColor="#2563EB"
+                    routeColor="#0057FF"
                     followId={follow ? vehiculeLive.id : null}
                   />
                 ) : (

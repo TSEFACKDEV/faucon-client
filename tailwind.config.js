@@ -4,38 +4,47 @@ module.exports = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
- 
+
     // Or if using `src` directory:
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
-      // Palette "Faucon Indigo" — identique à mobile/src/constants/colors.ts,
-      // pour que le dashboard admin et l'app mobile soient visuellement
-      // la même marque. Ne pas dupliquer les valeurs ailleurs : si la
-      // palette change un jour, les deux fichiers doivent être mis à jour
-      // ensemble.
+      // Palette "Tech Falcon" v3 — identique à mobile/src/theme/colors.ts
+      // (marine profond → bleu électrique → cyan lumineux, or en accent rare),
+      // pour que le dashboard admin et l'app mobile soient visuellement la
+      // même marque. Ne pas dupliquer les valeurs ailleurs : si la palette
+      // change un jour, les deux fichiers doivent être mis à jour ensemble.
       colors: {
         primary: {
-          50: '#EEF0F7', 100: '#D9DDEE', 200: '#B3BADD', 300: '#8690C4',
-          400: '#5F6BA8', 500: '#45518C', 600: '#363F70', 700: '#2A3159',
-          800: '#1F2544', 900: '#161A33',
-          DEFAULT: '#363F70',
+          50: '#EAF1FF', 100: '#CFE0FF', 200: '#9FC2FF', 300: '#6AA0FF',
+          400: '#3B7DFF', 500: '#1A63FF', 600: '#0057FF', 700: '#0044CC',
+          800: '#002D72', 900: '#001A44',
+          DEFAULT: '#0057FF',
         },
         accent: {
-          50: '#FFF6EC', 100: '#FFE7C7', 200: '#FFD08F', 300: '#FDB35C',
-          400: '#F2884D', 500: '#E8842A', 600: '#C96A1C', 700: '#A85618',
-          text: '#9E4F1C',
-          DEFAULT: '#F2884D',
+          50: '#E6FBFF', 100: '#B8F3FF', 200: '#7FE8FF', 300: '#45DBFF',
+          400: '#00C2FF', 500: '#00A8DE', 600: '#0089B8', 700: '#00688C',
+          text: '#00688C',
+          DEFAULT: '#00C2FF',
+        },
+        // Or — accent CTA / éléments premium, usage rare et intentionnel
+        // (même règle que côté mobile : jamais en décoratif au même titre
+        // que primary/accent).
+        gold: {
+          50: '#FFF6E5', 100: '#FFE7B8', 200: '#FFD680', 300: '#FFC24D',
+          400: '#FFB000', 500: '#FF8A00', 600: '#E67300', 700: '#B85B00',
+          text: '#7A3D00',
+          DEFAULT: '#FFB000',
         },
         neutral: {
-          0: '#FAF9F7', 50: '#F3F1EE', 100: '#E8E5E0', 200: '#D7D2CA',
-          300: '#B8B2A8', 500: '#857E72', 600: '#6B6558', 700: '#4A473F',
-          900: '#211F1B',
+          0: '#F5F8FC', 50: '#EDF2FA', 100: '#E1E8F2', 200: '#C9D3E3',
+          300: '#A8B4C9', 500: '#74839C', 600: '#5A6980', 700: '#3D4A61',
+          900: '#0B1526',
         },
-        success: { DEFAULT: '#2E9E6B', strong: '#1F7A50', tint: '#E7F5EE' },
-        warning: { DEFAULT: '#E3A72E', strong: '#8A5E10', tint: '#FBF0DC' },
-        danger:  { DEFAULT: '#D64545', strong: '#B23434', tint: '#FBEAEA' },
+        success: { DEFAULT: '#22C55E', strong: '#15803D', tint: '#E7F9EE' },
+        warning: { DEFAULT: '#F59E0B', strong: '#B45309', tint: '#FFF3DC' },
+        danger:  { DEFAULT: '#EF4444', strong: '#B91C1C', tint: '#FDEAEA' },
       },
       fontFamily: {
         sans: ['var(--font-inter)'],

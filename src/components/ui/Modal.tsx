@@ -1,5 +1,5 @@
 'use client';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IoCloseOutline } from 'react-icons/io5';
 
@@ -12,14 +12,53 @@ interface Props {
   wide?: boolean;
 }
 
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export default function Modal({ open, onClose, title, subtitle, children, wide = false }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      // Piège à focus : Tab/Shift+Tab ne doit pas sortir de la modale tant
+      // qu'elle est ouverte, sinon le clavier navigue derrière un overlay
+      // qui bloque déjà visuellement et via le clic (onClick={onClose} sur
+      // le fond) le reste de la page.
+      if (e.key === 'Tab' && panelRef.current) {
+        const focusables = panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+
+    // Verrou de scroll : le contenu derrière l'overlay ne doit pas défiler
+    // (molette/clavier) pendant qu'une modale est ouverte.
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const firstFocusable = panelRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+    firstFocusable?.focus();
+
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus();
+    };
   }, [open, onClose]);
 
   return (
@@ -33,13 +72,17 @@ export default function Modal({ open, onClose, title, subtitle, children, wide =
           onClick={onClose}
         >
           <motion.div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
             initial={{ opacity: 0, y: 14, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 14, scale: 0.98 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
             className={`
               w-full ${wide ? 'max-w-2xl' : 'max-w-md'}
-              bg-white rounded-2xl shadow-[0_8px_40px_rgba(33,31,27,0.16)]
+              bg-white rounded-2xl shadow-[0_8px_40px_rgba(11,21,38,0.16)]
               border border-neutral-100 max-h-[90vh] overflow-y-auto
             `}
             onClick={(e) => e.stopPropagation()}

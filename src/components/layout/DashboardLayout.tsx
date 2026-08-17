@@ -9,6 +9,8 @@ import Sidebar from './Sidebar';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
 import { useRealtimeStore } from '@/store/realtime.store';
+import { reconnectRealtime } from '@/lib/realtime';
+import { onAuthChangeFromOtherTab } from '@/lib/authBroadcast';
 import Logo from '@/components/ui/Logo';
 
 interface Props {
@@ -31,8 +33,7 @@ export default function DashboardLayout({ children }: Props) {
       }
       try {
         const user = await authService.me();
-        if (user.role !== 'ADMIN') {
-          await authService.logout();
+        if (!(await authService.ensureAdmin(user))) {
           clearUser();
           router.push('/');
           return;
@@ -49,6 +50,16 @@ export default function DashboardLayout({ children }: Props) {
     };
     init();
   }, []);
+
+  // Un login/logout dans un AUTRE onglet change les cookies (partagés par le
+  // navigateur) sans que cet onglet-ci ne le sache — son store Zustand et sa
+  // connexion Socket.IO restent sur l'ancienne identité. Un rechargement
+  // complet est la façon la plus sûre de tout resynchroniser (état admin,
+  // liste de véhicules visibles, souscriptions temps réel) plutôt que de
+  // corriger chaque bout d'état en mémoire un par un.
+  useEffect(() => onAuthChangeFromOtherTab(() => {
+    window.location.reload();
+  }), []);
 
   // Note : le tiroir mobile se referme lui-même au clic sur un lien de
   // navigation (onClick=onClose dans Sidebar) et sur le voile du fond.
@@ -82,13 +93,31 @@ export default function DashboardLayout({ children }: Props) {
         {connexionRealtime === 'deconnecte' && (
           <div
             role="status"
-            className="flex items-center gap-2 px-4 py-2.5 text-sm text-amber-800 bg-amber-50 border-b border-amber-200"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-warning-strong bg-warning-tint border-b border-warning"
           >
             <IoCloudOfflineOutline size={18} className="shrink-0" />
             <span>
               Connexion temps réel perdue : les positions affichées peuvent être
               anciennes. Reconnexion automatique en cours…
             </span>
+          </div>
+        )}
+        {connexionRealtime === 'echec' && (
+          <div
+            role="status"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-danger-strong bg-danger-tint border-b border-danger"
+          >
+            <IoCloudOfflineOutline size={18} className="shrink-0" />
+            <span className="flex-1">
+              Connexion temps réel interrompue : les positions affichées ne se
+              mettent plus à jour automatiquement.
+            </span>
+            <button
+              onClick={() => reconnectRealtime()}
+              className="shrink-0 font-semibold underline underline-offset-2 hover:no-underline"
+            >
+              Recharger
+            </button>
           </div>
         )}
         <AnimatePresence mode="wait">

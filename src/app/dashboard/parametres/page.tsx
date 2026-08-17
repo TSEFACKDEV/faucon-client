@@ -7,6 +7,7 @@ import {
   IoLogOutOutline,
 } from 'react-icons/io5';
 import { authService } from '@/services/auth.service';
+import { useLogout } from '@/hooks/useLogout';
 import { User } from '@/types';
 import { formatDateTime } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/errors';
@@ -25,10 +26,10 @@ const item = {
 };
 
 export default function ParametresPage() {
+  const { handleLogout, loading: logoutLoading } = useLogout();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [logoutLoading, setLogoutLoading] = useState(false);
 
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
@@ -67,17 +68,6 @@ export default function ParametresPage() {
       toast.error(getErrorMessage(err, 'Impossible de mettre à jour votre profil. Réessayez dans un instant.'));
     } finally {
       setSaving(false);
-    }
-  };
-
-  const logout = async () => {
-    setLogoutLoading(true);
-    try {
-      await authService.logout();
-      window.location.href = '/';
-    } catch {
-      toast.error('Impossible de vous déconnecter. Réessayez dans un instant.');
-      setLogoutLoading(false);
     }
   };
 
@@ -172,7 +162,7 @@ export default function ParametresPage() {
                 Terminer la session et revenir à l&apos;écran de connexion
               </p>
             </div>
-            <Button variant="danger" loading={logoutLoading} onClick={logout}>
+            <Button variant="danger" loading={logoutLoading} onClick={handleLogout}>
               <IoLogOutOutline size={16} />
               Se déconnecter
             </Button>

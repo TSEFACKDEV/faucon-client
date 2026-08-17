@@ -11,17 +11,17 @@ export default function AlarmsBarChart({ data }: Props) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} margin={{ top: 8, right: 12, left: -20, bottom: 0 }} barCategoryGap={10}>
-        <CartesianGrid stroke="#E8E5E0" strokeDasharray="0" vertical={false} />
+        <CartesianGrid stroke="#E1E8F2" strokeDasharray="0" vertical={false} />
         <XAxis
           dataKey="date"
           tickFormatter={(d) => format(parseISO(d), 'EEEEEE', { locale: fr })}
-          tick={{ fill: '#857E72', fontSize: 11 }}
-          axisLine={{ stroke: '#D7D2CA' }}
+          tick={{ fill: '#74839C', fontSize: 11 }}
+          axisLine={{ stroke: '#C9D3E3' }}
           tickLine={false}
         />
         <YAxis
           allowDecimals={false}
-          tick={{ fill: '#857E72', fontSize: 11 }}
+          tick={{ fill: '#74839C', fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           width={28}
@@ -29,10 +29,10 @@ export default function AlarmsBarChart({ data }: Props) {
         <Tooltip
           labelFormatter={(d) => format(parseISO(String(d)), 'EEEE d MMMM', { locale: fr })}
           formatter={(value) => [value, 'Alarmes']}
-          contentStyle={{ borderRadius: 10, border: '1px solid #E8E5E0', fontSize: 12.5 }}
-          cursor={{ fill: '#F3F1EE' }}
+          contentStyle={{ borderRadius: 10, border: '1px solid #E1E8F2', fontSize: 12.5 }}
+          cursor={{ fill: '#EDF2FA' }}
         />
-        <Bar dataKey="total" fill="#B23434" radius={[4, 4, 0, 0]} maxBarSize={24} />
+        <Bar dataKey="total" fill="#B91C1C" radius={[4, 4, 0, 0]} maxBarSize={24} />
       </BarChart>
     </ResponsiveContainer>
   );
