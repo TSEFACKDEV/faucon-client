@@ -3,12 +3,26 @@
 // on privilégie ce message métier (déjà en français), sinon on retombe sur un
 // message générique selon le type d'erreur (réseau, HTTP, délai d'attente).
 
+import { ApiResponse } from '@/types';
+
 interface ApiErrorShape {
   code?: string;
   response?: {
     status?: number;
     data?: { message?: string };
   };
+}
+
+/**
+ * Extrait `data` d'une réponse API typée de manière sûre.
+ * Lance une erreur explicite si le champ est absent (réponse serveur
+ * inattendue) au lieu de crasher silencieusement sur un `null`.
+ */
+export function unwrap<T>(res: ApiResponse<T>): T {
+  if (res.data == null) {
+    throw new Error('Réponse serveur inattendue : champ « data » manquant.');
+  }
+  return res.data;
 }
 
 // Un message « technique » (Prisma, pile d'appel, code erreur brut…) n'a

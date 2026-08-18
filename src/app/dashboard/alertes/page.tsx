@@ -292,15 +292,9 @@ export default function AlertesPage() {
               <Button
                 fullWidth
                 loading={acquitting === selected.id}
-                onClick={async () => {
-                  try {
-                    await adminService.acquitAlarme(selected.id);
-                    setAlarmes((prev) => prev.map((x) => (x.id === selected.id ? { ...x, estAcquittee: true } : x)));
-                    setSelected((prev) => (prev ? { ...prev, estAcquittee: true } : prev));
-                    toast.success('Alarme acquittée');
-                  } catch (err) {
-                    toast.error(getErrorMessage(err, 'Impossible d\'acquitter cette alarme. Réessayez dans un instant.'));
-                  }
+                onClick={() => {
+                  handleAcquit(selected);
+                  setSelected(null);
                 }}
               >
                 <IoCheckmarkDoneOutline size={16} />

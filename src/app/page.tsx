@@ -7,13 +7,14 @@ import { motion } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { IoMailOutline, IoLockClosedOutline, IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
-import Image from 'next/image';
+
 import { loginSchema } from '@/lib/validations';
 import { getErrorMessage } from '@/lib/errors';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import Logo from '@/components/ui/Logo';
 
 interface LoginFormValues {
   email: string;
@@ -63,7 +64,7 @@ export default function LoginPage() {
       >
         <div className="flex flex-col items-center gap-2 mb-8">
           <div className="w-14 h-14 rounded-2xl bg-primary-600 shadow-lg shadow-primary-600/30 flex items-center justify-center">
-            <Image src="/mark-white.png" alt="Faucon" width={30} height={30} />
+            <Logo tone="white" size={32} showWordmark={false} />
           </div>
           <p className="text-sm font-semibold text-primary-600 mt-2 tracking-wide">FAUCON</p>
           <p className="text-sm text-neutral-600 mt-1">Tour de contrôle des traceurs</p>
@@ -72,6 +73,8 @@ export default function LoginPage() {
         <Formik
           initialValues={{ email: '', password: '' }}
           validationSchema={loginSchema}
+          validateOnChange={false}
+          validateOnBlur={false}
           onSubmit={handleSubmit}
         >
           {({ values, errors, touched, handleChange, handleBlur, isSubmitting }) => (

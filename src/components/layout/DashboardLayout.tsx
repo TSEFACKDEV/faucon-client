@@ -49,6 +49,7 @@ export default function DashboardLayout({ children }: Props) {
       }
     };
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Un login/logout dans un AUTRE onglet change les cookies (partagés par le
@@ -57,9 +58,12 @@ export default function DashboardLayout({ children }: Props) {
   // complet est la façon la plus sûre de tout resynchroniser (état admin,
   // liste de véhicules visibles, souscriptions temps réel) plutôt que de
   // corriger chaque bout d'état en mémoire un par un.
-  useEffect(() => onAuthChangeFromOtherTab(() => {
-    window.location.reload();
-  }), []);
+  useEffect(() => {
+    return onAuthChangeFromOtherTab(() => {
+      window.location.reload();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Note : le tiroir mobile se referme lui-même au clic sur un lien de
   // navigation (onClick=onClose dans Sidebar) et sur le voile du fond.

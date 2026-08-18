@@ -75,6 +75,7 @@ export interface VehiculeResume {
   niveauSignal?: number | null;
   estActif: boolean;
   dateAjout: string;
+  joursActifs: number;
   derniereCommunication?: string | null;
   latitude?: number | null;
   longitude?: number | null;

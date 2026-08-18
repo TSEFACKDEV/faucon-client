@@ -19,8 +19,4 @@ export const provisionSchema = Yup.object({
     .required('Préfixe requis'),
 });
 
-export const phoneAlerteSchema = Yup.object({
-  telephone: Yup.string()
-    .matches(/^\+[1-9]\d{7,14}$/, 'Format attendu : +237XXXXXXXXX')
-    .required('Numéro requis'),
-});
+

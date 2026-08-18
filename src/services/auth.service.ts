@@ -1,4 +1,5 @@
 import api from '@/lib/axios';
+import { unwrap } from '@/lib/errors';
 import { setAuthCookies, getAccessToken, getRefreshToken, clearAuthCookies } from '@/lib/authCookies';
 import { broadcastAuthChange } from '@/lib/authBroadcast';
 import { AuthResponse, User, ApiResponse } from '@/types';
@@ -12,7 +13,7 @@ export const authService = {
       email,
       password,
     });
-    const result = data.data!;
+    const result = unwrap(data);
     setAuthCookies(result.tokens.accessToken, result.tokens.refreshToken);
     broadcastAuthChange('login');
     return result;
@@ -30,7 +31,7 @@ export const authService = {
 
   me: async (): Promise<User> => {
     const { data } = await api.get<ApiResponse<User>>('/auth/me');
-    return data.data!;
+    return unwrap(data);
   },
 
   updateProfile: async (payload: {
@@ -39,7 +40,7 @@ export const authService = {
     telephone?: string;
   }): Promise<User> => {
     const { data } = await api.patch<ApiResponse<User>>('/auth/me', payload);
-    return data.data!;
+    return unwrap(data);
   },
 
   isAuthenticated: (): boolean => {

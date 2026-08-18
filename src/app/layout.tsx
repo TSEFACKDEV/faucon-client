@@ -23,7 +23,12 @@ export const metadata: Metadata = {
   description: "Dashboard interne d'administration Faucon : traceurs, utilisateurs, alertes.",
   applicationName: 'Faucon Admin',
   icons: {
-    icon: [{ url: '/icon.png', sizes: 'any', type: 'image/png' }],
+    icon: [
+      { url: '/icon.png', sizes: 'any', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
   // Outil interne, pas un site public — ne doit jamais être indexé.
   robots: { index: false, follow: false },

@@ -1,4 +1,5 @@
 import api from '@/lib/axios';
+import { unwrap } from '@/lib/errors';
 import {
   ApiResponse, UtilisateurResume, UtilisateurDetail, VehiculeResume, VehiculeDetail,
   Alarme, StatsOverview, Commande, CodeCommande, Role, VehiculeProvisionne, DeviceMode,
@@ -8,12 +9,12 @@ export const adminService = {
   // ── Utilisateurs ──────────────────────────────────────────────
   getUtilisateurs: async (): Promise<UtilisateurResume[]> => {
     const { data } = await api.get<ApiResponse<UtilisateurResume[]>>('/admin/utilisateurs');
-    return data.data!;
+    return unwrap(data);
   },
 
   getUtilisateurById: async (id: string): Promise<UtilisateurDetail> => {
     const { data } = await api.get<ApiResponse<UtilisateurDetail>>(`/admin/utilisateurs/${id}`);
-    return data.data!;
+    return unwrap(data);
   },
 
   creerUtilisateur: async (
@@ -22,7 +23,7 @@ export const adminService = {
     const { data } = await api.post<ApiResponse<UtilisateurResume>>('/admin/utilisateurs', {
       userName, email, password, role,
     });
-    return data.data! as unknown as UtilisateurResume;
+    return unwrap(data);
   },
 
   setRole: async (id: string, role: Role): Promise<void> => {
@@ -36,12 +37,12 @@ export const adminService = {
   // ── Traceurs ──────────────────────────────────────────────────
   getVehicules: async (): Promise<VehiculeResume[]> => {
     const { data } = await api.get<ApiResponse<VehiculeResume[]>>('/admin/vehicules');
-    return data.data!;
+    return unwrap(data);
   },
 
   getVehiculeById: async (id: string): Promise<VehiculeDetail> => {
     const { data } = await api.get<ApiResponse<VehiculeDetail>>(`/admin/vehicules/${id}`);
-    return data.data!;
+    return unwrap(data);
   },
 
   updateVehicule: async (
@@ -58,7 +59,7 @@ export const adminService = {
     const { data } = await api.post<ApiResponse<Commande>>(`/admin/vehicules/${id}/commandes`, {
       codeCommande, valeur,
     });
-    return data.data!;
+    return unwrap(data);
   },
 
   provisionner: async (count: number, prefix: string, apiKey?: string): Promise<VehiculeProvisionne[]> => {
@@ -67,13 +68,13 @@ export const adminService = {
       { count, prefix },
       { headers: apiKey ? { 'x-provisioning-key': apiKey } : {} }
     );
-    return data.data!;
+    return unwrap(data);
   },
 
   // ── Alarmes ───────────────────────────────────────────────────
   getAlarmes: async (filtres?: { typeAlarme?: string; estAcquittee?: boolean; vehiculeId?: string }): Promise<Alarme[]> => {
     const { data } = await api.get<ApiResponse<Alarme[]>>('/admin/alarmes', { params: filtres });
-    return data.data!;
+    return unwrap(data);
   },
 
   acquitAlarme: async (alarmeId: string): Promise<void> => {
@@ -110,6 +111,6 @@ export const adminService = {
   // ── Statistiques ──────────────────────────────────────────────
   getStatsOverview: async (): Promise<StatsOverview> => {
     const { data } = await api.get<ApiResponse<StatsOverview>>('/admin/stats/overview');
-    return data.data!;
+    return unwrap(data);
   },
 };

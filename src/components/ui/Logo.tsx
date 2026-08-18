@@ -7,24 +7,23 @@ interface Props {
   className?: string;
 }
 
-// Même mark que l'app mobile (mobile/assets/logo/falcon-mark-*.png) : un
-// faucon en piqué, ailes en flèche, dessiné pour ce projet. Deux
-// déclinaisons comme côté mobile — dégradé marine→bleu→cyan pour les fonds
-// clairs (tone="color"), blanc uni pour les fonds sombres/dégradés
-// (tone="white"), où le dégradé se fondrait sinon dans l'arrière-plan.
+// Marque tête de faucon : blanche pour les fonds sombres, bleu/or pour les
+// fonds clairs — mêmes fichiers source que l'app mobile (assets/logo), pour
+// une identité visuelle cohérente entre le dashboard web et l'app installée.
 export default function Logo({ tone = 'color', size = 28, showWordmark = true, className = '' }: Props) {
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
       <Image
-        src={tone === 'white' ? '/mark-white.png' : '/mark.png'}
+        src={tone === 'white' ? '/falcon-mark-white.png' : '/falcon-mark-color.png'}
         alt="Faucon"
         width={size}
         height={size}
-        style={{ width: size, height: size }}
+        style={{ width: size, height: size, objectFit: 'contain' }}
+        priority
       />
       {showWordmark && (
         <span
-          className={`font-bold tracking-[0.05em] ${tone === 'white' ? 'text-white' : 'text-primary-600'}`}
+          className={`font-bold tracking-[0.08em] ${tone === 'white' ? 'text-white' : 'text-[#002D72]'}`}
           style={{ fontSize: size * 0.62 }}
         >
           FAUCON
