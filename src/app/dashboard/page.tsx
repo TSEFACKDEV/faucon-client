@@ -144,11 +144,13 @@ export default function DashboardPage() {
               {enLigneAvecPosition.length} traceur(s) avec position récente
             </p>
           </div>
-          <div className="h-[360px]">
-            {enLigneAvecPosition.length > 0 ? (
-              <MapView markers={mapMarkers} />
-            ) : (
-              <div className="h-full flex items-center justify-center text-sm text-neutral-500">
+          <div className="h-[360px] relative">
+            {/* La carte reste toujours montée (même sans traceur en ligne) —
+                sinon rien ne distingue "carte cassée" de "personne en ligne
+                actuellement", ce qui a déjà induit en erreur (voir rapport). */}
+            <MapView markers={mapMarkers} />
+            {enLigneAvecPosition.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center text-sm text-neutral-500 bg-white/70 pointer-events-none">
                 Aucun traceur en ligne pour le moment
               </div>
             )}
