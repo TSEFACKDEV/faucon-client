@@ -212,9 +212,10 @@ export default function UtilisateursPage() {
                             <IoEyeOutline size={17} />
                           </button>
                           <button
-                            onClick={() => setToDelete(u)}
-                            className="p-2 rounded-lg text-neutral-500 hover:text-danger-strong hover:bg-danger-tint transition-colors"
-                            title="Supprimer"
+                            onClick={() => u.role !== 'ADMIN' && setToDelete(u)}
+                            disabled={u.role === 'ADMIN'}
+                            className="p-2 rounded-lg text-neutral-500 hover:text-danger-strong hover:bg-danger-tint disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-neutral-500 disabled:cursor-not-allowed transition-colors"
+                            title={u.role === 'ADMIN' ? 'Un compte administrateur ne peut pas être supprimé' : 'Supprimer'}
                           >
                             <IoTrashOutline size={17} />
                           </button>

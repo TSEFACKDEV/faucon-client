@@ -9,11 +9,11 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary:   'bg-primary-600 text-white hover:bg-primary-700 border border-primary-600',
+  primary:   'bg-gradient-to-r from-primary-600 to-accent-400 text-white border border-transparent shadow-[0_4px_16px_rgba(0,87,255,0.28)] hover:shadow-[0_6px_20px_rgba(0,87,255,0.4)] hover:brightness-105',
   secondary: 'bg-white text-primary-600 border border-primary-600 hover:bg-primary-50',
   danger:    'bg-white text-danger-strong border border-danger-strong hover:bg-danger-tint',
   ghost:     'bg-transparent text-neutral-600 hover:bg-neutral-50 border border-transparent',
-  accent:    'bg-accent-400 text-white hover:bg-accent-600 border border-accent-400',
+  accent:    'bg-gradient-to-r from-gold-400 to-gold-500 text-primary-900 border border-transparent shadow-[0_4px_16px_rgba(255,176,0,0.3)] hover:brightness-105',
 };
 
 const sizes = {

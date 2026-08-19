@@ -1,9 +1,10 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import {
   IoPeopleOutline, IoHardwareChipOutline, IoRadioOutline, IoWarningOutline,
+  IoLocateOutline, IoAppsOutline, IoChevronDown,
 } from 'react-icons/io5';
 import dynamic from 'next/dynamic';
 import { adminService } from '@/services/admin.service';
@@ -19,6 +20,7 @@ import GrowthLineChart from '@/components/dashboard/GrowthLineChart';
 import AlarmsBarChart from '@/components/dashboard/AlarmsBarChart';
 import CategoryBarChart from '@/components/dashboard/CategoryBarChart';
 import BatteryBarChart from '@/components/dashboard/BatteryBarChart';
+import type { MapViewHandle } from '@/components/map/MapView';
 
 // Leaflet a besoin du DOM — chargement client-only.
 const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false });
@@ -36,6 +38,10 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<StatsOverview | null>(null);
   const [vehicules, setVehicules] = useState<VehiculeResume[]>([]);
   const [loading, setLoading] = useState(true);
+  // null = suivre tous les traceurs (vue d'ensemble) ; sinon, id du traceur
+  // suivi en continu — même logique que le bouton "Suivi" de l'app mobile.
+  const [followId, setFollowId] = useState<string | null>(null);
+  const mapRef = useRef<MapViewHandle>(null);
 
   // Flux temps réel : chaque trame reçue par le backend met immédiatement à
   // jour la position, la batterie et le statut « en ligne » du traceur, sans
@@ -87,24 +93,49 @@ export default function DashboardPage() {
   // Dépend explicitement de `tick` : isOnline() est une fonction du temps,
   // ce recalcul périodique volontaire est ce qui permet à un traceur de
   // basculer "hors ligne" ici sans attendre un événement non lié.
+  const vehiculesAvecPosition = useMemo(
+    () => vehiculesLive.filter((v) => v.latitude != null && v.longitude != null),
+    [vehiculesLive]
+  );
   const enLigneAvecPosition = useMemo(
-    () => vehiculesLive.filter(
-      (v) => isOnline(v.derniereCommunication, v.niveauSignal, v.niveauBatterie) && v.latitude != null && v.longitude != null
+    () => vehiculesAvecPosition.filter(
+      (v) => isOnline(v.derniereCommunication, v.niveauSignal, v.niveauBatterie)
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [vehiculesLive, tick]
+    [vehiculesAvecPosition, tick]
   );
 
-  const mapMarkers = useMemo(() => enLigneAvecPosition.map((v) => ({
-    id: v.id,
-    latitude: v.latitude as number,
-    longitude: v.longitude as number,
-    label: v.nom,
-    color: '#0057FF',
-    // Halo pulsant sur les traceurs qui viennent de transmettre une trame
-    // en temps réel.
-    pulse: !!livePositions[v.id],
-  })), [enLigneAvecPosition, livePositions]);
+  // La carte affiche TOUS les traceurs ayant déjà une position connue (comme
+  // sur mobile), pas seulement ceux en ligne — un traceur hors ligne reste
+  // visible (grisé) plutôt que de disparaître silencieusement de la carte.
+  const mapMarkers = useMemo(() => vehiculesAvecPosition.map((v) => {
+    const online = isOnline(v.derniereCommunication, v.niveauSignal, v.niveauBatterie);
+    return {
+      id: v.id,
+      latitude: v.latitude as number,
+      longitude: v.longitude as number,
+      label: v.nom,
+      color: online ? '#0057FF' : '#A8B4C9',
+      // Halo pulsant sur les traceurs qui viennent de transmettre une trame
+      // en temps réel.
+      pulse: online && !!livePositions[v.id],
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [vehiculesAvecPosition, livePositions, tick]);
+
+  // Le traceur suivi peut disparaître (retrait, perte de position) sans que
+  // l'admin ne change explicitement la sélection — on retombe alors sur
+  // "Tous" plutôt que de suivre silencieusement un id fantôme.
+  useEffect(() => {
+    if (followId && !vehiculesAvecPosition.some((v) => v.id === followId)) {
+      setFollowId(null);
+    }
+  }, [followId, vehiculesAvecPosition]);
+
+  const handleFollowChange = (id: string | null) => {
+    setFollowId(id);
+    if (id === null) mapRef.current?.fitAll();
+  };
 
   if (loading) {
     return (
@@ -118,11 +149,22 @@ export default function DashboardPage() {
     return <div className="p-8 text-neutral-600">Impossible de charger les statistiques.</div>;
   }
 
+  const followedVehicule = followId ? vehicules.find((v) => v.id === followId) : null;
+
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="p-8 flex flex-col gap-6">
-      <motion.div variants={item}>
-        <h1 className="text-2xl font-semibold text-neutral-900">Tour de contrôle</h1>
-        <p className="text-sm text-neutral-600 mt-1">Vue d&apos;ensemble du système Faucon</p>
+      <motion.div variants={item} className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-neutral-900 tracking-tight">Tour de contrôle</h1>
+          <p className="text-sm text-neutral-600 mt-1">Vue d&apos;ensemble du système Faucon</p>
+        </div>
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white border border-neutral-100 shadow-[0_2px_10px_rgba(11,21,38,0.05)]">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+          </span>
+          <span className="text-xs font-semibold text-neutral-700">Temps réel actif</span>
+        </div>
       </motion.div>
 
       {/* ── Stat cards ── */}
@@ -135,23 +177,66 @@ export default function DashboardPage() {
         <StatCard label="Alarmes aujourd'hui" value={stats.alarmesAujourdhui} icon={IoWarningOutline} tone="warning" />
       </motion.div>
 
-      {/* ── Carte des traceurs en ligne ── */}
+      {/* ── Carte des traceurs ── */}
       <motion.div variants={item}>
         <Card padding={false} className="overflow-hidden">
-          <div className="px-6 pt-5 pb-3">
-            <h2 className="text-base font-semibold text-neutral-900">Traceurs en ligne</h2>
-            <p className="text-xs text-neutral-600 mt-0.5">
-              {enLigneAvecPosition.length} traceur(s) avec position récente
-            </p>
+          <div className="px-6 pt-5 pb-4 flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-neutral-900">Traceurs sur la carte</h2>
+              <p className="text-xs text-neutral-600 mt-0.5">
+                {enLigneAvecPosition.length} en ligne · {vehiculesAvecPosition.length} avec position connue
+              </p>
+            </div>
+
+            {/* Suivi : tous les dispositifs (vue d'ensemble) ou un seul en
+                continu — même principe que le bouton "Suivi" de l'app mobile. */}
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <select
+                  value={followId ?? '__all__'}
+                  onChange={(e) => handleFollowChange(e.target.value === '__all__' ? null : e.target.value)}
+                  disabled={vehiculesAvecPosition.length === 0}
+                  className="appearance-none pl-9 pr-8 py-2 text-sm font-medium text-neutral-900 bg-neutral-0 border border-neutral-100 rounded-[10px] cursor-pointer hover:border-primary-300 focus:outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <option value="__all__">Tous les traceurs</option>
+                  {vehiculesAvecPosition.map((v) => (
+                    <option key={v.id} value={v.id}>Suivre : {v.nom}</option>
+                  ))}
+                </select>
+                {followId ? (
+                  <IoLocateOutline size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-600 pointer-events-none" />
+                ) : (
+                  <IoAppsOutline size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" />
+                )}
+                <IoChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
+              </div>
+              {!followId && (
+                <button
+                  onClick={() => mapRef.current?.fitAll()}
+                  disabled={vehiculesAvecPosition.length === 0}
+                  title="Recentrer sur tous les traceurs"
+                  className="p-2 rounded-[10px] border border-neutral-100 text-neutral-600 hover:text-primary-600 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <IoLocateOutline size={17} />
+                </button>
+              )}
+            </div>
           </div>
-          <div className="h-[360px] relative">
+
+          <div className="h-[420px] relative">
             {/* La carte reste toujours montée (même sans traceur en ligne) —
                 sinon rien ne distingue "carte cassée" de "personne en ligne
                 actuellement", ce qui a déjà induit en erreur (voir rapport). */}
-            <MapView markers={mapMarkers} />
-            {enLigneAvecPosition.length === 0 && (
+            <MapView ref={mapRef} markers={mapMarkers} followId={followId} selectedId={followId} />
+            {followedVehicule && (
+              <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur shadow-[0_4px_16px_rgba(11,21,38,0.12)] text-xs font-semibold text-primary-700">
+                <IoLocateOutline size={13} />
+                Suivi : {followedVehicule.nom}
+              </div>
+            )}
+            {vehiculesAvecPosition.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center text-sm text-neutral-500 bg-white/70 pointer-events-none">
-                Aucun traceur en ligne pour le moment
+                Aucune position reçue pour le moment
               </div>
             )}
           </div>

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -35,6 +35,12 @@ interface Props {
   followId?: string | null;
 }
 
+export interface MapViewHandle {
+  // Recadre sur l'ensemble des marqueurs + tracé actuels — utilisé quand
+  // l'admin repasse du suivi d'un traceur unique au mode "tous".
+  fitAll: () => void;
+}
+
 const createMarker = (color: string, label: string, pulse = false) => {
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="48" viewBox="0 0 40 48">
@@ -67,20 +73,31 @@ const createMarker = (color: string, label: string, pulse = false) => {
   });
 };
 
-export default function MapView({
+const MapView = forwardRef<MapViewHandle, Props>(function MapView({
   markers,
   selectedId = null,
   onMarkerClick,
   route,
   routeColor = '#0057FF',
   followId = null,
-}: Props) {
+}, ref) {
   const mapRef     = useRef<L.Map | null>(null);
   const markersRef = useRef<Record<string, L.Marker>>({});
   const polylineRef = useRef<L.Polyline | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fitDoneRef = useRef(false);
   const lastFollowRef = useRef<{ id: string; lat: number; lon: number } | null>(null);
+
+  const fitAll = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const bounds = L.latLngBounds([]);
+    if (route && route.length > 0) route.forEach((p) => bounds.extend([p.latitude, p.longitude]));
+    markers.forEach((m) => bounds.extend([m.latitude, m.longitude]));
+    if (bounds.isValid()) map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+  };
+
+  useImperativeHandle(ref, () => ({ fitAll }));
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -111,20 +128,9 @@ export default function MapView({
   // route+marqueur de replay).
   useEffect(() => {
     if (!mapRef.current || fitDoneRef.current) return;
-    const map = mapRef.current;
-
-    const bounds = L.latLngBounds([]);
-    if (route && route.length > 0) {
-      route.forEach((p) => bounds.extend([p.latitude, p.longitude]));
-    }
-    if (markers.length > 0) {
-      markers.forEach((m) => bounds.extend([m.latitude, m.longitude]));
-    }
-
-    if (bounds.isValid()) {
-      fitDoneRef.current = true;
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: followId ? 15 : 14 });
-    }
+    if (markers.length === 0 && (!route || route.length === 0)) return;
+    fitDoneRef.current = true;
+    fitAll();
     // Cadrage volontairement "une seule fois" : `markers.length` suffit à le
     // déclencher, on ne veut PAS re-cadrer à chaque déplacement de marqueur.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -213,4 +219,6 @@ export default function MapView({
       style={{ width: '100%', height: '100%', background: '#EDF2FA' }}
     />
   );
-}
+});
+
+export default MapView;

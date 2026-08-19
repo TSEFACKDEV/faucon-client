@@ -8,21 +8,21 @@ interface Props {
 }
 
 const toneStyles = {
-  primary: { bg: 'bg-primary-50', icon: 'text-primary-600' },
-  success: { bg: 'bg-success-tint', icon: 'text-success-strong' },
-  warning: { bg: 'bg-warning-tint', icon: 'text-warning-strong' },
-  danger:  { bg: 'bg-danger-tint', icon: 'text-danger-strong' },
+  primary: { bg: 'bg-gradient-to-br from-primary-500 to-accent-400', glow: 'shadow-[0_4px_14px_rgba(0,87,255,0.3)]' },
+  success: { bg: 'bg-gradient-to-br from-success to-success-strong', glow: 'shadow-[0_4px_14px_rgba(34,197,94,0.28)]' },
+  warning: { bg: 'bg-gradient-to-br from-warning to-warning-strong', glow: 'shadow-[0_4px_14px_rgba(245,158,11,0.28)]' },
+  danger:  { bg: 'bg-gradient-to-br from-danger to-danger-strong', glow: 'shadow-[0_4px_14px_rgba(239,68,68,0.28)]' },
 };
 
 export default function StatCard({ label, value, icon: Icon, tone = 'primary' }: Props) {
   const t = toneStyles[tone];
   return (
-    <div className="card-hover bg-white rounded-[14px] border border-neutral-100 shadow-[0_1px_3px_rgba(11,21,38,0.05)] p-5 flex items-center gap-4">
-      <div className={`w-11 h-11 rounded-[12px] ${t.bg} flex items-center justify-center shrink-0`}>
-        <Icon size={20} className={t.icon} />
+    <div className="card-hover bg-white rounded-[16px] border border-neutral-100 shadow-[0_2px_10px_rgba(11,21,38,0.05)] p-5 flex items-center gap-4">
+      <div className={`w-11 h-11 rounded-[12px] ${t.bg} ${t.glow} flex items-center justify-center shrink-0`}>
+        <Icon size={20} className="text-white" />
       </div>
       <div className="min-w-0">
-        <p className="text-2xl font-semibold text-neutral-900 leading-tight">{value}</p>
+        <p className="text-2xl font-semibold text-neutral-900 leading-tight tracking-tight">{value}</p>
         <p className="text-xs text-neutral-600 mt-0.5 truncate">{label}</p>
       </div>
     </div>

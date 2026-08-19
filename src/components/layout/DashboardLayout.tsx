@@ -71,7 +71,7 @@ export default function DashboardLayout({ children }: Props) {
   if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-0">
-        <div className="w-8 h-8 rounded-full border-2 border-primary-200 border-t-primary-600 animate-spin" />
+        <div className="w-9 h-9 rounded-full border-[3px] border-primary-100 border-t-primary-600 animate-spin" />
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function DashboardLayout({ children }: Props) {
       <Sidebar />
 
       {/* Barre supérieure mobile : hamburger + marque */}
-      <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-primary-600 shadow-md">
+      <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-primary-800 to-primary-600 shadow-md">
         <button
           onClick={() => setMenuOpen(true)}
           className="text-white/85 hover:text-white transition-colors p-1"
