@@ -8,6 +8,7 @@
 import { io, Socket } from 'socket.io-client';
 import type {
   RealtimePosition,
+  RealtimeVehicleMode,
 } from '@/types/realtime';
 import type { Alarme, Commande } from '@/types';
 import { useRealtimeStore } from '@/store/realtime.store';
@@ -18,11 +19,13 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL ?? '';
 type PositionListener = (data: RealtimePosition) => void;
 type AlarmListener = (data: Alarme) => void;
 type CommandeListener = (data: Commande) => void;
+type VehicleModeListener = (data: RealtimeVehicleMode) => void;
 
 let socket: Socket | null = null;
 const positionListeners = new Set<PositionListener>();
 const alarmListeners = new Set<AlarmListener>();
 const commandeListeners = new Set<CommandeListener>();
+const vehicleModeListeners = new Set<VehicleModeListener>();
 let subscribedIds: string[] = [];
 
 const ensureConnected = (): Socket | null => {
@@ -58,6 +61,9 @@ const ensureConnected = (): Socket | null => {
   });
   socket.on('commande_update', (data: Commande) => {
     commandeListeners.forEach((l) => l(data));
+  });
+  socket.on('vehicle_mode', (data: RealtimeVehicleMode) => {
+    vehicleModeListeners.forEach((l) => l(data));
   });
 
   socket.on('connect_error', (err) => {
@@ -120,6 +126,11 @@ export const onAlarm = (listener: AlarmListener): (() => void) => {
 export const onCommandeUpdate = (listener: CommandeListener): (() => void) => {
   commandeListeners.add(listener);
   return () => commandeListeners.delete(listener);
+};
+
+export const onVehicleMode = (listener: VehicleModeListener): (() => void) => {
+  vehicleModeListeners.add(listener);
+  return () => vehicleModeListeners.delete(listener);
 };
 
 export const disconnectRealtime = (): void => {

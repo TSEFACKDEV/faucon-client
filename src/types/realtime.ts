@@ -16,4 +16,12 @@ export interface RealtimePosition {
   eventType?: string;
 }
 
-export type RealtimeEventName = 'position_update' | 'alarm' | 'commande_update';
+export type RealtimeEventName = 'position_update' | 'alarm' | 'commande_update' | 'vehicle_mode';
+
+// Mode RÉELLEMENT appliqué par le traceur, confirmé par son ACK. Émis par
+// le backend quand le traceur répond à une commande MODE (imposition) ou
+// MODE? (lecture) — cf. tracker/websocket.service.ts (broadcastVehicleMode).
+export interface RealtimeVehicleMode {
+  vehiculeId: string;
+  modeActuel: 'WORK' | 'MOVE' | 'STANDBY';
+}

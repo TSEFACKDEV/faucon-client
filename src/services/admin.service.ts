@@ -90,6 +90,13 @@ export const adminService = {
     await api.put(`/admin/vehicules/${id}/mode`, { mode });
   },
 
+  // Demande au traceur le mode qu'il applique réellement (lecture seule).
+  // La réponse arrive par ACK : le backend resynchronise la base et émet
+  // l'événement socket 'vehicle_mode'.
+  readMode: async (id: string): Promise<void> => {
+    await api.post(`/admin/vehicules/${id}/mode/read`);
+  },
+
   setSpeedLimit: async (id: string, seuilKmh: number): Promise<void> => {
     await api.put(`/admin/vehicules/${id}/speed-limit`, { seuilKmh });
   },

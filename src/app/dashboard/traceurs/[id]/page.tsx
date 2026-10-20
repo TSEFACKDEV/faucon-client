@@ -9,9 +9,10 @@ import {
   IoArrowBackOutline, IoRadioOutline, IoBatteryHalfOutline, IoHardwareChipOutline,
   IoPersonOutline, IoCallOutline, IoSpeedometerOutline, IoLocationOutline,
   IoPulseOutline, IoWarningOutline, IoCheckmarkCircleOutline, IoCheckmarkDoneOutline,
-  IoNavigateOutline,
+  IoNavigateOutline, IoRefreshOutline,
 } from 'react-icons/io5';
 import { adminService } from '@/services/admin.service';
+import { onVehicleMode } from '@/lib/realtime';
 import { VehiculeDetail, DeviceMode, CodeCommande, StatutCommande, Position } from '@/types';
 import {
   MODE_LABELS, ALARM_LABELS, formatDateTime, timeAgo, getBatteryColor, formatCoords, isOnline,
@@ -56,6 +57,8 @@ export default function TraceurDetailPage() {
   const [geoLon, setGeoLon] = useState('');
   const [telephone, setTelephone] = useState('');
   const [configuring, setConfiguring] = useState<string | null>(null);
+  // Lecture du mode RÉELLEMENT appliqué par le traceur (commande MODE?).
+  const [checkingMode, setCheckingMode] = useState(false);
 
   // isOnline(derniereCommunication) est dérivé de Date.now() — sans ce tick,
   // le badge "En ligne" ne se réévalue que si CE traceur reçoit une nouvelle
@@ -150,6 +153,39 @@ export default function TraceurDetailPage() {
     };
     initial();
   }, [load]);
+
+  // Mode réellement appliqué par le traceur : le backend l'émet dès que le
+  // traceur confirme (ACK) une commande MODE ou MODE?. On met à jour la
+  // fiche sans recharger toute la page.
+  useEffect(() => {
+    const unsub = onVehicleMode((data) => {
+      if (!id || data.vehiculeId !== id) return;
+      setCheckingMode(false);
+      setVehicule((prev) => (prev ? { ...prev, modeActuel: data.modeActuel } : prev));
+      toast.success(`Mode confirmé par le traceur : ${data.modeActuel}`);
+    });
+    return unsub;
+  }, [id]);
+
+  // Interroge le traceur sur son mode réel. La réponse arrive par l'événement
+  // socket 'vehicle_mode' ; au-delà du délai, on prévient l'utilisateur au
+  // lieu de laisser le bouton bloqué (traceur hors ligne).
+  const checkMode = async () => {
+    if (!id || checkingMode) return;
+    setCheckingMode(true);
+    try {
+      await adminService.readMode(id);
+      setTimeout(() => {
+        setCheckingMode((still) => {
+          if (still) toast.error("Aucune réponse du traceur — il est peut-être hors ligne.");
+          return false;
+        });
+      }, 20000);
+    } catch (err) {
+      setCheckingMode(false);
+      toast.error(getErrorMessage(err, 'Impossible de demander le mode au traceur. Réessayez dans un instant.'));
+    }
+  };
 
   const route = useMemo(() => {
     if (!vehiculeLive || vehiculeLive.positions.length < 2) return undefined;
@@ -512,6 +548,22 @@ export default function TraceurDetailPage() {
                   >
                     Enregistrer le mode
                   </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    fullWidth
+                    className="mt-2"
+                    loading={checkingMode}
+                    disabled={checkingMode || !vehiculeLive.estActif}
+                    onClick={checkMode}
+                  >
+                    <IoRefreshOutline size={16} />
+                    Vérifier le mode sur le traceur
+                  </Button>
+                  <p className="text-[11px] text-neutral-500 mt-1.5">
+                    Interroge le boîtier et affiche le mode qu’il applique réellement
+                    (après un redémarrage, par exemple).
+                  </p>
                 </div>
 
                 <div className="border-t border-neutral-100 pt-4">

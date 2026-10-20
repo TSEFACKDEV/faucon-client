@@ -28,7 +28,9 @@ export type AlarmType =
   | 'NON_MOUVEMENT'
   | 'BATTERIE_FAIBLE';
 
-export type CodeCommande = 'LOCALISER' | 'MODE' | 'REDEMARRER' | 'RESET_USINE' | 'NUMERO_SMS';
+// 'MODE' impose un mode (avec une valeur) ; 'MODE?' lit le mode réellement
+// appliqué par le traceur (sans valeur, réponse portée par l'ACK).
+export type CodeCommande = 'LOCALISER' | 'MODE' | 'MODE?' | 'REDEMARRER' | 'RESET_USINE' | 'NUMERO_SMS';
 export type StatutCommande = 'PENDING' | 'SUCCESS' | 'FAILED' | 'TIMEOUT';
 
 export interface Commande {
