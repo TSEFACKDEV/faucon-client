@@ -30,7 +30,7 @@ export type AlarmType =
 
 // 'MODE' impose un mode (avec une valeur) ; 'MODE?' lit le mode réellement
 // appliqué par le traceur (sans valeur, réponse portée par l'ACK).
-export type CodeCommande = 'LOCALISER' | 'MODE' | 'MODE?' | 'REDEMARRER' | 'RESET_USINE' | 'NUMERO_SMS';
+export type CodeCommande = 'LOCALISER' | 'MODE' | 'MODE?' | 'INFO' | 'REDEMARRER' | 'RESET_USINE' | 'NUMERO_SMS';
 export type StatutCommande = 'PENDING' | 'SUCCESS' | 'FAILED' | 'TIMEOUT';
 
 export interface Commande {
@@ -41,6 +41,40 @@ export interface Commande {
   statutExecution: StatutCommande;
   dateEnvoi: string;
   dateReponse?: string | null;
+}
+
+// Diagnostic périodique du traceur (firmware v12.1, canal
+// faucon/<trackerId>/diag, toutes les 5 min) : état réel du boîtier —
+// mode appliqué, modèle, version, compteurs de reset, santé I2C, file
+// d'attente du journal flash, mémoire libre.
+export interface DiagnosticTraceur {
+  id: string;
+  vehiculeId: string;
+  horodatage: string;
+  modele?: string | null;
+  version?: string | null;
+  mode?: string | null;
+  causeReset?: string | null;
+  resetCode?: number | null;
+  dernierArret?: string | null;
+  nbWatchdog: number;
+  nbBrownout: number;
+  nbPanique: number;
+  fixValide: boolean;
+  fixPerime: boolean;
+  ageFixSecondes?: number | null;
+  satellites?: number | null;
+  hdop?: number | null;
+  batteriePct?: number | null;
+  signalPct?: number | null;
+  signalValide: boolean;
+  i2cRecuperations: number;
+  i2cSuspendu: boolean;
+  journalOk: boolean;
+  positionsPerdues: number;
+  fileNombre?: number | null;
+  sourceHeure?: string | null;
+  heapLibre?: number | null;
 }
 
 // ── Utilisateurs (vue admin) ──────────────────────────────────────

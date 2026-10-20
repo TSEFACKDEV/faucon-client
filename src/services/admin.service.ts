@@ -3,6 +3,7 @@ import { unwrap } from '@/lib/errors';
 import {
   ApiResponse, UtilisateurResume, UtilisateurDetail, VehiculeResume, VehiculeDetail,
   Alarme, StatsOverview, Commande, CodeCommande, Role, VehiculeProvisionne, DeviceMode,
+  DiagnosticTraceur,
 } from '@/types';
 
 export const adminService = {
@@ -95,6 +96,20 @@ export const adminService = {
   // l'événement socket 'vehicle_mode'.
   readMode: async (id: string): Promise<void> => {
     await api.post(`/admin/vehicules/${id}/mode/read`);
+  },
+
+  // Demande au traceur ses infos matérielles et logicielles (modèle,
+  // version du firmware) — commande INFO.
+  readInfos: async (id: string): Promise<void> => {
+    await api.post(`/admin/vehicules/${id}/infos`);
+  },
+
+  // Historique des diagnostics périodiques reçus du traceur (canal /diag).
+  getDiagnostics: async (id: string, limite = 50): Promise<DiagnosticTraceur[]> => {
+    const { data } = await api.get(`/admin/vehicules/${id}/diagnostics`, {
+      params: { limite },
+    });
+    return data.data;
   },
 
   setSpeedLimit: async (id: string, seuilKmh: number): Promise<void> => {

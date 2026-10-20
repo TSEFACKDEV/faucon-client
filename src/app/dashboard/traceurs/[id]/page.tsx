@@ -12,8 +12,8 @@ import {
   IoNavigateOutline, IoRefreshOutline,
 } from 'react-icons/io5';
 import { adminService } from '@/services/admin.service';
-import { onVehicleMode } from '@/lib/realtime';
-import { VehiculeDetail, DeviceMode, CodeCommande, StatutCommande, Position } from '@/types';
+import { onVehicleMode, onDiagnostic } from '@/lib/realtime';
+import { VehiculeDetail, DeviceMode, CodeCommande, StatutCommande, Position, DiagnosticTraceur } from '@/types';
 import {
   MODE_LABELS, ALARM_LABELS, formatDateTime, timeAgo, getBatteryColor, formatCoords, isOnline,
 } from '@/lib/utils';
@@ -24,6 +24,7 @@ import { useRealtimeStore } from '@/store/realtime.store';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
+import InfoCell from '@/components/ui/InfoCell';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 
@@ -59,6 +60,10 @@ export default function TraceurDetailPage() {
   const [configuring, setConfiguring] = useState<string | null>(null);
   // Lecture du mode RÉELLEMENT appliqué par le traceur (commande MODE?).
   const [checkingMode, setCheckingMode] = useState(false);
+  // Dernier diagnostic périodique du traceur (canal /diag) : état réel du
+  // boîtier — modèle, version, compteurs de reset, santé I2C, journal flash.
+  const [diagnostic, setDiagnostic] = useState<DiagnosticTraceur | null>(null);
+  const [checkingInfos, setCheckingInfos] = useState(false);
 
   // isOnline(derniereCommunication) est dérivé de Date.now() — sans ce tick,
   // le badge "En ligne" ne se réévalue que si CE traceur reçoit une nouvelle
@@ -139,6 +144,15 @@ export default function TraceurDetailPage() {
       setGeoLat(data.perimetreGeofence?.centreLat ? String(data.perimetreGeofence.centreLat) : '');
       setGeoLon(data.perimetreGeofence?.centreLon ? String(data.perimetreGeofence.centreLon) : '');
       setTelephone(data.telephoneAlerte ?? '');
+      // Dernier diagnostic connu du traceur (historique) — la version la
+      // plus récente arrive ensuite par le socket.
+      try {
+        const diags = await adminService.getDiagnostics(id, 1);
+        setDiagnostic(diags[0] ?? null);
+      } catch {
+        // Pas de diagnostic disponible (traceur ancien firmware) : on
+        // laisse l'état vide, l'interface l'indique.
+      }
     } catch (err) {
       console.error('[TraceurDetail]', err);
       toast.error(getErrorMessage(err, 'Impossible de charger ce traceur. Réessayez dans un instant.'));
@@ -167,6 +181,17 @@ export default function TraceurDetailPage() {
     return unsub;
   }, [id]);
 
+  // Diagnostic périodique du traceur : le backend l'émet dès qu'il reçoit
+  // un message sur faucon/<trackerId>/diag (toutes les 5 min) — la fiche se
+  // met à jour sans rechargement.
+  useEffect(() => {
+    const unsub = onDiagnostic((data) => {
+      if (!id || data.vehiculeId !== id) return;
+      setDiagnostic(data as unknown as DiagnosticTraceur);
+    });
+    return unsub;
+  }, [id]);
+
   // Interroge le traceur sur son mode réel. La réponse arrive par l'événement
   // socket 'vehicle_mode' ; au-delà du délai, on prévient l'utilisateur au
   // lieu de laisser le bouton bloqué (traceur hors ligne).
@@ -187,8 +212,33 @@ export default function TraceurDetailPage() {
     }
   };
 
-  const route = useMemo(() => {
-    if (!vehiculeLive || vehiculeLive.positions.length < 2) return undefined;
+  // Demande les infos matérielles / logicielles (commande INFO) : la réponse
+  // arrive dans l'ACK. On recharge la fiche après quelques secondes pour
+  // récupérer la commande INFO dans l'historique (le serveur la joint à la
+  // fiche véhicule) — pas de route dédiée nécessaire.
+  const readInfos = async () => {
+    if (!id || checkingInfos) return;
+    setCheckingInfos(true);
+    try {
+      await adminService.readInfos(id);
+      setTimeout(() => {
+        setCheckingInfos(false);
+        load();
+      }, 6000);
+    } catch (err) {
+      setCheckingInfos(false);
+      toast.error(getErrorMessage(err, 'Impossible de demander les informations au traceur.'));
+    }
+  };
+
+  // Dernière commande INFO envoyée au traceur : sa réponse (dans l'ACK)
+  // contient le résumé "modèle version mode" renvoyé par le boîtier.
+  const derniereInfo = useMemo(() => {
+    const list = vehiculeLive?.commandes ?? [];
+    return list.find((c) => c.codeCommande === 'INFO') ?? null;
+  }, [vehiculeLive]);
+
+  const route = useMemo(() => {    if (!vehiculeLive || vehiculeLive.positions.length < 2) return undefined;
     return vehiculeLive.positions
       .slice()
       .sort((a, b) => new Date(a.horodatage).getTime() - new Date(b.horodatage).getTime())
@@ -507,6 +557,73 @@ export default function TraceurDetailPage() {
                     {vehiculeLive.derniereCommunication ? timeAgo(vehiculeLive.derniereCommunication) : 'Jamais'}
                   </span>
                 </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          <motion.div variants={item}>
+            <Card>
+              <h2 className="text-base font-semibold text-neutral-900">État du traceur</h2>
+              <p className="text-xs text-neutral-600 mb-4">
+                Diagnostic publié par le boîtier toutes les 5 minutes (firmware v12.1)
+              </p>
+
+              {diagnostic ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <InfoCell label="Modèle" value={diagnostic.modele ?? '—'} />
+                  <InfoCell label="Firmware" value={diagnostic.version ?? '—'} />
+                  <InfoCell label="Mode appliqué" value={diagnostic.mode ?? '—'} />
+                  <InfoCell label="Dernier diagnostic" value={timeAgo(diagnostic.horodatage)} />
+                  <InfoCell
+                    label="Redémarrages"
+                    value={`${diagnostic.nbWatchdog} WDT · ${diagnostic.nbBrownout} brownout · ${diagnostic.nbPanique} panique`}
+                  />
+                  <InfoCell label="Dernière cause" value={diagnostic.causeReset ?? '—'} />
+                  {diagnostic.dernierArret && diagnostic.dernierArret !== '?' && (
+                    <InfoCell label="Dernier arrêt" value={diagnostic.dernierArret} />
+                  )}
+                  <InfoCell
+                    label="Mémoire libre"
+                    value={diagnostic.heapLibre ? `${Math.round(diagnostic.heapLibre / 1024)} Ko` : '—'}
+                  />
+                  <InfoCell
+                    label="Journal flash"
+                    value={diagnostic.fileNombre ? `${diagnostic.fileNombre} en attente` : 'vide'}
+                  />
+                  {diagnostic.i2cRecuperations > 0 && (
+                    <InfoCell label="Récupérations I2C" value={String(diagnostic.i2cRecuperations)} />
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-500">
+                  Aucun diagnostic reçu — le traceur n&rsquo;a pas encore publié
+                  son état (firmware v12.1 requis).
+                </p>
+              )}
+
+              <div className="flex flex-wrap items-center gap-3 mt-4">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  loading={checkingInfos}
+                  disabled={checkingInfos}
+                  onClick={readInfos}
+                >
+                  <IoHardwareChipOutline size={16} />
+                  Interroger le traceur
+                </Button>
+                {derniereInfo?.statutExecution === 'SUCCESS' && derniereInfo.parametres?.detail && (
+                  <span className="text-xs font-semibold text-primary-700">
+                    {derniereInfo.parametres.detail}
+                  </span>
+                )}
+                {derniereInfo?.statutExecution === 'FAILED' && (
+                  <span className="text-xs text-danger-600">
+                    {derniereInfo.parametres?.detail === 'commande inconnue'
+                      ? 'Firmware antérieur à la v12.1 : commande INFO inconnue'
+                      : 'Commande refusée par le traceur'}
+                  </span>
+                )}
               </div>
             </Card>
           </motion.div>

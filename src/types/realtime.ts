@@ -25,3 +25,34 @@ export interface RealtimeVehicleMode {
   vehiculeId: string;
   modeActuel: 'WORK' | 'MOVE' | 'STANDBY';
 }
+
+// Diagnostic périodique du traceur (canal /diag, toutes les 5 min) :
+// modèle, version, compteurs de reset, santé I2C, journal flash.
+export interface RealtimeDiagnostic {
+  vehiculeId: string;
+  id: string;
+  horodatage: string;
+  modele?: string | null;
+  version?: string | null;
+  mode?: string | null;
+  causeReset?: string | null;
+  dernierArret?: string | null;
+  nbWatchdog: number;
+  nbBrownout: number;
+  nbPanique: number;
+  fixValide: boolean;
+  fixPerime: boolean;
+  ageFixSecondes?: number | null;
+  satellites?: number | null;
+  hdop?: number | null;
+  batteriePct?: number | null;
+  signalPct?: number | null;
+  signalValide: boolean;
+  i2cRecuperations: number;
+  i2cSuspendu: boolean;
+  journalOk: boolean;
+  positionsPerdues: number;
+  fileNombre?: number | null;
+  sourceHeure?: string | null;
+  heapLibre?: number | null;
+}
