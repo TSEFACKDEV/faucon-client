@@ -1,3 +1,39 @@
+@font-face {
+  font-family: 'PlusJakartaSans';
+  src: url('/fonts/PlusJakartaSans-400.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlusJakartaSans';
+  src: url('/fonts/PlusJakartaSans-500.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlusJakartaSans';
+  src: url('/fonts/PlusJakartaSans-600.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlusJakartaSans';
+  src: url('/fonts/PlusJakartaSans-700.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlusJakartaSans';
+  src: url('/fonts/PlusJakartaSans-800.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,7 +47,7 @@
 
   html, body {
     height: 100%;
-    font-family: "Inter", system-ui, sans-serif;
+    font-family: "PlusJakartaSans", system-ui, sans-serif;
     background-color: #F5F8FC;
     color: #0B1526;
     -webkit-font-smoothing: antialiased;
@@ -95,7 +131,7 @@
 /* Toast override */
 .Toastify__toast {
   border-radius: 12px !important;
-  font-family: "Inter", system-ui, sans-serif !important;
+  font-family: "PlusJakartaSans", system-ui, sans-serif !important;
   font-size: 14px !important;
   box-shadow: 0 8px 30px rgba(11, 21, 38, 0.12) !important;
 }

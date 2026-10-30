@@ -28,14 +28,14 @@ export default function DashboardLayout({ children }: Props) {
   useEffect(() => {
     const init = async () => {
       if (!authService.isAuthenticated()) {
-        router.push('/');
+        router.push('/login');
         return;
       }
       try {
         const user = await authService.me();
         if (!(await authService.ensureAdmin(user))) {
           clearUser();
-          router.push('/');
+          router.push('/login');
           return;
         }
         setUser(user);
@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: Props) {
         // vers la page de connexion avec un message explicite (le toast est
         // ré-affiché par le conteneur de la page de connexion).
         toast.error('Session expirée. Veuillez vous reconnecter.');
-        router.push('/');
+        router.push('/login');
       }
     };
     init();
@@ -62,7 +62,6 @@ export default function DashboardLayout({ children }: Props) {
     return onAuthChangeFromOtherTab(() => {
       window.location.reload();
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Note : le tiroir mobile se referme lui-même au clic sur un lien de

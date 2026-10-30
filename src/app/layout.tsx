@@ -1,12 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap', // Optimisation du chargement de la police
-  variable: '--font-inter',
-});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -16,12 +9,41 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://faucon.169.58.69.36.sslip.io'
+  ),
   title: {
-    template: '%s | Faucon Admin',
-    default: 'Faucon Admin — Tour de contrôle',
+    template: '%s | Faucon',
+    default: 'Faucon — Voir, surveiller, contrôler votre flotte',
   },
-  description: "Dashboard interne d'administration Faucon : traceurs, utilisateurs, alertes.",
-  applicationName: 'Faucon Admin',
+  description:
+    'Faucon connecte traceurs GPS, véhicules et équipes : position temps réel, alertes terrain, historique des trajets et diagnostic à distance. Conçu au Cameroun pour les flottes africaines.',
+  applicationName: 'Faucon',
+  keywords: [
+    'géolocalisation véhicule',
+    'traceur GPS',
+    'gestion de flotte',
+    'Cameroun',
+    'Afrique',
+    'télémétrie',
+    'alertes',
+  ],
+  openGraph: {
+    title: 'Faucon — Voir, surveiller, contrôler votre flotte',
+    description:
+      'Position temps réel, alertes terrain et historique des trajets. Une plateforme web et mobile pensée pour les routes africaines.',
+    type: 'website',
+    locale: 'fr_CM',
+    siteName: 'Faucon',
+    images: [{ url: '/icon.png', width: 512, height: 512, alt: 'Faucon' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Faucon — Voir, surveiller, contrôler votre flotte',
+    description:
+      'Le suivi de flotte pensé pour le terrain : temps réel, alertes, historique et diagnostic.',
+    images: ['/icon.png'],
+  },
   icons: {
     icon: [
       { url: '/icon.png', sizes: 'any', type: 'image/png' },
@@ -30,8 +52,7 @@ export const metadata: Metadata = {
       { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
   },
-  // Outil interne, pas un site public — ne doit jamais être indexé.
-  robots: { index: false, follow: false },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
@@ -40,11 +61,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} scroll-smooth`}>
-      <body className={`${inter.className} antialiased`}>
-        <main id="main-content" role="main">
+    <html lang="fr" className="scroll-smooth">
+      <body className="antialiased">
+        <div id="main-content">
           {children}
-        </main>
+        </div>
       </body>
     </html>
   );

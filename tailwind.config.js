@@ -42,7 +42,7 @@ module.exports = {
         danger:  { DEFAULT: '#EF4444', strong: '#B91C1C', tint: '#FDEAEA' },
       },
       fontFamily: {
-        sans: ['var(--font-inter)'],
+        sans: ['PlusJakartaSans', 'system-ui', 'sans-serif'],
       },
     },
   },

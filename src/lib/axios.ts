@@ -68,7 +68,7 @@ api.interceptors.response.use(
 
       // Le rafraîchissement a échoué : la session est réellement terminée.
       clearAuthCookies();
-      if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
         // Ce 401 peut venir d'une requête de fond (widget périodique, autre
         // onglet) pendant qu'un formulaire est à moitié rempli ailleurs sur
         // la page — un redirect immédiat et silencieux l'efface sans
@@ -76,7 +76,7 @@ api.interceptors.response.use(
         // couper la page.
         toast.error('Session expirée. Vous allez être redirigé vers la connexion.');
         setTimeout(() => {
-          window.location.href = '/';
+          window.location.href = '/login';
         }, 1500);
       }
     }

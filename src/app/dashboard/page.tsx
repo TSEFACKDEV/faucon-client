@@ -124,13 +124,13 @@ export default function DashboardPage() {
   }), [vehiculesAvecPosition, livePositions, tick]);
 
   // Le traceur suivi peut disparaître (retrait, perte de position) sans que
-  // l'admin ne change explicitement la sélection — on retombe alors sur
-  // "Tous" plutôt que de suivre silencieusement un id fantôme.
-  useEffect(() => {
-    if (followId && !vehiculesAvecPosition.some((v) => v.id === followId)) {
-      setFollowId(null);
-    }
-  }, [followId, vehiculesAvecPosition]);
+  // l'admin ne change explicitement la sélection. On dérive la valeur utile
+  // au rendu au lieu de synchroniser un état dans un effet : cela évite un
+  // rendu en cascade et suit immédiatement la liste réelle.
+  const activeFollowId =
+    followId && vehiculesAvecPosition.some((v) => v.id === followId)
+      ? followId
+      : null;
 
   const handleFollowChange = (id: string | null) => {
     setFollowId(id);
@@ -149,7 +149,7 @@ export default function DashboardPage() {
     return <div className="p-8 text-neutral-600">Impossible de charger les statistiques.</div>;
   }
 
-  const followedVehicule = followId ? vehicules.find((v) => v.id === followId) : null;
+  const followedVehicule = activeFollowId ? vehicules.find((v) => v.id === activeFollowId) : null;
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="p-8 flex flex-col gap-6">
@@ -193,7 +193,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <div className="relative">
                 <select
-                  value={followId ?? '__all__'}
+                  value={activeFollowId ?? '__all__'}
                   onChange={(e) => handleFollowChange(e.target.value === '__all__' ? null : e.target.value)}
                   disabled={vehiculesAvecPosition.length === 0}
                   className="appearance-none pl-9 pr-8 py-2 text-sm font-medium text-neutral-900 bg-neutral-0 border border-neutral-100 rounded-[10px] cursor-pointer hover:border-primary-300 focus:outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -203,14 +203,14 @@ export default function DashboardPage() {
                     <option key={v.id} value={v.id}>Suivre : {v.nom}</option>
                   ))}
                 </select>
-                {followId ? (
+                {activeFollowId ? (
                   <IoLocateOutline size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-600 pointer-events-none" />
                 ) : (
                   <IoAppsOutline size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" />
                 )}
                 <IoChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
               </div>
-              {!followId && (
+              {!activeFollowId && (
                 <button
                   onClick={() => mapRef.current?.fitAll()}
                   disabled={vehiculesAvecPosition.length === 0}
@@ -227,7 +227,7 @@ export default function DashboardPage() {
             {/* La carte reste toujours montée (même sans traceur en ligne) —
                 sinon rien ne distingue "carte cassée" de "personne en ligne
                 actuellement", ce qui a déjà induit en erreur (voir rapport). */}
-            <MapView ref={mapRef} markers={mapMarkers} followId={followId} selectedId={followId} />
+            <MapView ref={mapRef} markers={mapMarkers} followId={activeFollowId} selectedId={activeFollowId} />
             {followedVehicule && (
               <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur shadow-[0_4px_16px_rgba(11,21,38,0.12)] text-xs font-semibold text-primary-700">
                 <IoLocateOutline size={13} />

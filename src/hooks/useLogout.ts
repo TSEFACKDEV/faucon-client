@@ -21,7 +21,7 @@ export const useLogout = () => {
       await authService.logout();
       closeRealtime();
       clearUser();
-      router.push('/');
+      router.push('/login');
     } catch {
       toast.error('Impossible de vous déconnecter. Réessayez dans un instant.');
       setLoading(false);
