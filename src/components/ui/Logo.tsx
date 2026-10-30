@@ -7,9 +7,9 @@ interface Props {
   className?: string;
 }
 
-// Marque Faucon : l'aile dorée, identique au logo de l'application mobile.
-// Sur fond sombre, le wordmark passe en blanc ; l'aile conserve son or de
-// marque pour rester reconnaissable partout (web, mobile, favicon, stores).
+// Marque Faucon : la tête de faucon, identique au logo de l'application
+// mobile. Version couleur sur les fonds clairs, version blanche sur les fonds
+// bleu profond. Aucune aile dorée n'est utilisée dans l'interface web.
 export default function Logo({
   tone = 'color',
   size = 28,
@@ -19,7 +19,7 @@ export default function Logo({
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
       <Image
-        src="/faucon-wing-gold.png"
+        src={tone === 'white' ? '/falcon-mark-white.png' : '/falcon-mark-color.png'}
         alt="Faucon"
         width={size}
         height={size}
