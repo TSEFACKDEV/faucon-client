@@ -239,10 +239,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('fr');
 
   useEffect(() => {
+    const queryLanguage = new URLSearchParams(window.location.search).get('lang');
     const saved = window.localStorage.getItem('faucon_language');
-    if (saved === 'en' || saved === 'fr') {
-      setLanguageState(saved);
-      document.documentElement.lang = saved;
+    const next = queryLanguage === 'en' || queryLanguage === 'fr'
+      ? queryLanguage
+      : (saved === 'en' || saved === 'fr' ? saved : null);
+    if (next) {
+      setLanguageState(next);
+      document.documentElement.lang = next;
     }
   }, []);
 
