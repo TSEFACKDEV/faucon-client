@@ -3,10 +3,10 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// CARTO Voyager : gratuit, sans clé, pensé pour un usage applicatif —
-// contrairement à tile.openstreetmap.org (serveur de démo de l'OSM
-// Foundation, qui bannit les apps à fort trafic sans préavis).
-const OSM_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+// OpenStreetMap standard : aucune clé, donc aucune expiration possible.
+// En cas d'indisponibilité, on bascule une seule fois sur le miroir OSM France.
+const OSM_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const OSM_FALLBACK_URL = 'https://a.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png';
 
 export interface MapMarkerData {
   id: string;
@@ -110,11 +110,19 @@ const MapView = forwardRef<MapViewHandle, Props>(function MapView({
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    L.tileLayer(OSM_URL, {
-      attribution: '© OpenStreetMap contributors © CARTO',
+    const tiles = L.tileLayer(OSM_URL, {
+      attribution: '© OpenStreetMap contributors',
       maxZoom: 19,
-      detectRetina: true,
     }).addTo(map);
+
+    // Repli sans clé si le serveur OSM principal ne répond pas.
+    tiles.once('tileerror', () => {
+      tiles.remove();
+      L.tileLayer(OSM_FALLBACK_URL, {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+      }).addTo(map);
+    });
 
     mapRef.current = map;
 

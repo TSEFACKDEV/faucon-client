@@ -12,12 +12,14 @@ import { useRealtimeStore } from '@/store/realtime.store';
 import { reconnectRealtime } from '@/lib/realtime';
 import { onAuthChangeFromOtherTab } from '@/lib/authBroadcast';
 import Logo from '@/components/ui/Logo';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 interface Props {
   children: ReactNode;
 }
 
 export default function DashboardLayout({ children }: Props) {
+  const { t } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const { setUser, clearUser } = useAuthStore();
@@ -44,7 +46,7 @@ export default function DashboardLayout({ children }: Props) {
         // Session expirée, token invalide ou serveur injoignable : on renvoie
         // vers la page de connexion avec un message explicite (le toast est
         // ré-affiché par le conteneur de la page de connexion).
-        toast.error('Session expirée. Veuillez vous reconnecter.');
+        toast.error(t('dashboard.sessionExpired'));
         router.push('/login');
       }
     };
@@ -100,8 +102,7 @@ export default function DashboardLayout({ children }: Props) {
           >
             <IoCloudOfflineOutline size={18} className="shrink-0" />
             <span>
-              Connexion temps réel perdue : les positions affichées peuvent être
-              anciennes. Reconnexion automatique en cours…
+              {t('dashboard.realtimeLost')}
             </span>
           </div>
         )}
@@ -112,8 +113,7 @@ export default function DashboardLayout({ children }: Props) {
           >
             <IoCloudOfflineOutline size={18} className="shrink-0" />
             <span className="flex-1">
-              Connexion temps réel interrompue : les positions affichées ne se
-              mettent plus à jour automatiquement.
+              {t('dashboard.realtimeDown')}
             </span>
             <button
               onClick={() => reconnectRealtime()}

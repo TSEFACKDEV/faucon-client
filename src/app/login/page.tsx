@@ -16,6 +16,8 @@ import { useAuthStore } from '@/store/auth.store';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Logo from '@/components/ui/Logo';
+import LanguageToggle from '@/components/ui/LanguageToggle';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 interface LoginFormValues {
   email: string;
@@ -24,6 +26,7 @@ interface LoginFormValues {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const { setUser } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -35,15 +38,15 @@ export default function LoginPage() {
       const { user } = await authService.login(values.email, values.password);
 
       if (!(await authService.ensureAdmin(user))) {
-        toast.error('Ce compte n\'a pas accès au dashboard admin');
+        toast.error(t('login.noAdmin'));
         return;
       }
 
       setUser(user);
-      toast.success(`Bienvenue, ${user.userName}`);
+      toast.success(`${t('login.welcomeUser')}, ${user.userName}`);
       router.push('/dashboard');
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Email ou mot de passe incorrect. Vérifiez vos identifiants et réessayez.'));
+      toast.error(getErrorMessage(error, t('login.badCredentials')));
     } finally {
       setSubmitting(false);
     }
@@ -56,6 +59,9 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-blueprint opacity-[0.15]" />
       <div className="absolute -top-48 -right-40 w-[560px] h-[560px] rounded-full bg-accent-500/25 blur-3xl animate-float-slow" />
       <div className="absolute -bottom-48 -left-40 w-[460px] h-[460px] rounded-full bg-white/10 blur-3xl animate-float-slower" />
+      <div className="absolute right-5 top-5 z-10">
+        <LanguageToggle tone="dark" />
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -68,7 +74,7 @@ export default function LoginPage() {
             <Logo tone="white" size={32} showWordmark={false} />
           </div>
           <p className="text-sm font-semibold text-primary-600 mt-2 tracking-wide">FAUCON</p>
-          <p className="text-sm text-neutral-600 mt-1">Tour de contrôle des traceurs</p>
+          <p className="text-sm text-neutral-600 mt-1">{t('login.welcome')}</p>
         </div>
 
         <Formik
@@ -81,7 +87,7 @@ export default function LoginPage() {
           {({ values, errors, touched, handleChange, handleBlur, isSubmitting }) => (
             <Form className="flex flex-col gap-5">
               <Input
-                label="Adresse email"
+                label={t('login.email')}
                 name="email"
                 type="email"
                 placeholder="admin@faucon.com"
@@ -95,7 +101,7 @@ export default function LoginPage() {
               />
 
               <Input
-                label="Mot de passe"
+                label={t('login.password')}
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
@@ -105,7 +111,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     className="text-neutral-500 hover:text-primary-600 transition-colors"
-                    aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
                   >
                     {showPassword ? <IoEyeOffOutline size={18} /> : <IoEyeOutline size={18} />}
                   </button>
@@ -119,21 +125,21 @@ export default function LoginPage() {
               />
 
               <Button type="submit" variant="primary" size="lg" loading={isSubmitting} fullWidth className="mt-2">
-                Se connecter
+                {t('login.submit')}
               </Button>
             </Form>
           )}
         </Formik>
 
         <p className="text-center text-xs text-neutral-500 mt-8">
-          Accès réservé au personnel Faucon
+          {t('login.adminOnly')}
         </p>
         <div className="mt-4 text-center">
           <Link
             href="/"
             className="text-xs font-semibold text-primary-600 transition-colors hover:text-primary-800"
           >
-            ← Retour au site
+            ← {t('login.back')}
           </Link>
         </div>
       </motion.div>

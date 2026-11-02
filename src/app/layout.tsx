@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { LanguageProvider } from '@/i18n/LanguageProvider';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -63,9 +64,11 @@ export default function RootLayout({
   return (
     <html lang="fr" className="scroll-smooth">
       <body className="antialiased">
-        <div id="main-content">
-          {children}
-        </div>
+        <LanguageProvider>
+          <div id="main-content">
+            {children}
+          </div>
+        </LanguageProvider>
       </body>
     </html>
   );

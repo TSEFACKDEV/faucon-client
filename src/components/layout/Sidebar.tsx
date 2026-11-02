@@ -10,14 +10,16 @@ import {
 import { useAuthStore } from '@/store/auth.store';
 import { useLogout } from '@/hooks/useLogout';
 import Logo from '@/components/ui/Logo';
+import LanguageToggle from '@/components/ui/LanguageToggle';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 const NAV = [
-  { href: '/dashboard',                    label: 'Dashboard',    icon: IoGridOutline },
-  { href: '/dashboard/utilisateurs',        label: 'Utilisateurs', icon: IoPeopleOutline },
-  { href: '/dashboard/traceurs',            label: 'Traceurs',     icon: IoHardwareChipOutline },
-  { href: '/dashboard/traceurs/provisionner', label: 'Provisionner', icon: IoAddCircleOutline },
-  { href: '/dashboard/alertes',             label: 'Alertes',      icon: IoWarningOutline },
-  { href: '/dashboard/parametres',          label: 'Paramètres',   icon: IoSettingsOutline },
+  { href: '/dashboard',                    key: 'sidebar.dashboard',  icon: IoGridOutline },
+  { href: '/dashboard/utilisateurs',        key: 'sidebar.users',      icon: IoPeopleOutline },
+  { href: '/dashboard/traceurs',            key: 'sidebar.trackers',   icon: IoHardwareChipOutline },
+  { href: '/dashboard/traceurs/provisionner', key: 'sidebar.provision', icon: IoAddCircleOutline },
+  { href: '/dashboard/alertes',             key: 'sidebar.alerts',     icon: IoWarningOutline },
+  { href: '/dashboard/parametres',          key: 'sidebar.settings',   icon: IoSettingsOutline },
 ];
 
 interface Props {
@@ -26,6 +28,7 @@ interface Props {
 }
 
 export default function Sidebar({ open = false, onClose }: Props) {
+  const { t } = useLanguage();
   const pathname = usePathname();
   const { user } = useAuthStore();
   const { handleLogout } = useLogout();
@@ -55,7 +58,7 @@ export default function Sidebar({ open = false, onClose }: Props) {
       </div>
 
       <nav className="relative flex-1 px-3 py-5 flex flex-col gap-1 overflow-y-auto">
-        {NAV.map(({ href, label, icon: Icon }) => {
+        {NAV.map(({ href, key, icon: Icon }) => {
           const isActive = href === '/dashboard'
             ? pathname === '/dashboard'
             : pathname.startsWith(href);
@@ -77,7 +80,7 @@ export default function Sidebar({ open = false, onClose }: Props) {
                 `}
               >
                 <Icon size={18} />
-                {label}
+                {t(key)}
               </span>
             </Link>
           );
@@ -85,18 +88,24 @@ export default function Sidebar({ open = false, onClose }: Props) {
       </nav>
 
       <div className="relative px-3 pb-4 pt-2 border-t border-white/10">
+        <div className="flex items-center justify-between px-2 pb-3">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/45">
+            {t('sidebar.language')}
+          </span>
+          <LanguageToggle tone="dark" />
+        </div>
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-[12px] bg-white/[0.06]">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gold-400 to-gold-500 flex items-center justify-center shrink-0 shadow-[0_2px_10px_rgba(255,176,0,0.35)]">
             <span className="text-sm font-bold text-primary-900">{initials}</span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-white truncate">{user?.userName ?? 'Admin'}</p>
-            <p className="text-xs text-white/55">Administrateur</p>
+            <p className="text-xs text-white/55">{t('sidebar.admin')}</p>
           </div>
           <button
             onClick={handleLogout}
-            title="Se déconnecter"
-            aria-label="Se déconnecter"
+            title={t('sidebar.logout')}
+            aria-label={t('sidebar.logout')}
             className="shrink-0 text-white/50 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
           >
             <IoLogOutOutline size={18} />

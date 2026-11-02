@@ -21,6 +21,7 @@ import AlarmsBarChart from '@/components/dashboard/AlarmsBarChart';
 import CategoryBarChart from '@/components/dashboard/CategoryBarChart';
 import BatteryBarChart from '@/components/dashboard/BatteryBarChart';
 import type { MapViewHandle } from '@/components/map/MapView';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 // Leaflet a besoin du DOM — chargement client-only.
 const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false });
@@ -35,6 +36,7 @@ const item = {
 };
 
 export default function DashboardPage() {
+  const { t } = useLanguage();
   const [stats, setStats] = useState<StatsOverview | null>(null);
   const [vehicules, setVehicules] = useState<VehiculeResume[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +84,7 @@ export default function DashboardPage() {
         setVehicules(v);
       } catch (err) {
         console.error('[Dashboard]', err);
-        toast.error(getErrorMessage(err, 'Impossible de charger les statistiques. Réessayez dans un instant.'));
+        toast.error(getErrorMessage(err, t('dashboard.loadError')));
       } finally {
         setLoading(false);
       }
@@ -146,7 +148,7 @@ export default function DashboardPage() {
   }
 
   if (!stats) {
-    return <div className="p-8 text-neutral-600">Impossible de charger les statistiques.</div>;
+    return <div className="p-8 text-neutral-600">{t('dashboard.loadError')}</div>;
   }
 
   const followedVehicule = activeFollowId ? vehicules.find((v) => v.id === activeFollowId) : null;
@@ -155,26 +157,26 @@ export default function DashboardPage() {
     <motion.div variants={container} initial="hidden" animate="show" className="p-8 flex flex-col gap-6">
       <motion.div variants={item} className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-neutral-900 tracking-tight">Tour de contrôle</h1>
-          <p className="text-sm text-neutral-600 mt-1">Vue d&apos;ensemble du système Faucon</p>
+          <h1 className="text-2xl font-semibold text-neutral-900 tracking-tight">{t('dashboard.title')}</h1>
+          <p className="text-sm text-neutral-600 mt-1">{t('dashboard.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white border border-neutral-100 shadow-[0_2px_10px_rgba(11,21,38,0.05)]">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
           </span>
-          <span className="text-xs font-semibold text-neutral-700">Temps réel actif</span>
+          <span className="text-xs font-semibold text-neutral-700">{t('dashboard.live')}</span>
         </div>
       </motion.div>
 
       {/* ── Stat cards ── */}
       <motion.div variants={item} className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <StatCard label="Utilisateurs" value={stats.totalUtilisateurs} icon={IoPeopleOutline} tone="primary" />
-        <StatCard label="Traceurs" value={stats.totalVehicules} icon={IoHardwareChipOutline} tone="primary" />
-        <StatCard label="En ligne" value={stats.vehiculesEnLigne} icon={IoRadioOutline} tone="success" />
-        <StatCard label="Actifs" value={stats.vehiculesActifs} icon={IoHardwareChipOutline} tone="primary" />
-        <StatCard label="Alarmes non acquittées" value={stats.alarmesNonAcquittees} icon={IoWarningOutline} tone="danger" />
-        <StatCard label="Alarmes aujourd'hui" value={stats.alarmesAujourdhui} icon={IoWarningOutline} tone="warning" />
+        <StatCard label={t('dashboard.users')} value={stats.totalUtilisateurs} icon={IoPeopleOutline} tone="primary" />
+        <StatCard label={t('dashboard.trackers')} value={stats.totalVehicules} icon={IoHardwareChipOutline} tone="primary" />
+        <StatCard label={t('dashboard.online')} value={stats.vehiculesEnLigne} icon={IoRadioOutline} tone="success" />
+        <StatCard label={t('dashboard.active')} value={stats.vehiculesActifs} icon={IoHardwareChipOutline} tone="primary" />
+        <StatCard label={t('dashboard.unacked')} value={stats.alarmesNonAcquittees} icon={IoWarningOutline} tone="danger" />
+        <StatCard label={t('dashboard.today')} value={stats.alarmesAujourdhui} icon={IoWarningOutline} tone="warning" />
       </motion.div>
 
       {/* ── Carte des traceurs ── */}
@@ -182,9 +184,9 @@ export default function DashboardPage() {
         <Card padding={false} className="overflow-hidden">
           <div className="px-6 pt-5 pb-4 flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h2 className="text-base font-semibold text-neutral-900">Traceurs sur la carte</h2>
+              <h2 className="text-base font-semibold text-neutral-900">{t('dashboard.mapTitle')}</h2>
               <p className="text-xs text-neutral-600 mt-0.5">
-                {enLigneAvecPosition.length} en ligne · {vehiculesAvecPosition.length} avec position connue
+                {enLigneAvecPosition.length} {t('dashboard.mapCount')} {vehiculesAvecPosition.length} {t('dashboard.mapKnown')}
               </p>
             </div>
 
@@ -198,9 +200,9 @@ export default function DashboardPage() {
                   disabled={vehiculesAvecPosition.length === 0}
                   className="appearance-none pl-9 pr-8 py-2 text-sm font-medium text-neutral-900 bg-neutral-0 border border-neutral-100 rounded-[10px] cursor-pointer hover:border-primary-300 focus:outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  <option value="__all__">Tous les traceurs</option>
+                  <option value="__all__">{t('dashboard.all')}</option>
                   {vehiculesAvecPosition.map((v) => (
-                    <option key={v.id} value={v.id}>Suivre : {v.nom}</option>
+                    <option key={v.id} value={v.id}>{t('dashboard.follow')} {v.nom}</option>
                   ))}
                 </select>
                 {activeFollowId ? (
@@ -246,20 +248,20 @@ export default function DashboardPage() {
       {/* ── Graphiques ── */}
       <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <h2 className="text-base font-semibold text-neutral-900 mb-1">Croissance des utilisateurs</h2>
-          <p className="text-xs text-neutral-600 mb-3">30 derniers jours</p>
+          <h2 className="text-base font-semibold text-neutral-900 mb-1">{t('dashboard.growth')}</h2>
+          <p className="text-xs text-neutral-600 mb-3">{t('dashboard.last30')}</p>
           <GrowthLineChart data={stats.croissanceUtilisateurs30j} />
         </Card>
 
         <Card>
-          <h2 className="text-base font-semibold text-neutral-900 mb-1">Alarmes</h2>
-          <p className="text-xs text-neutral-600 mb-3">7 derniers jours</p>
+          <h2 className="text-base font-semibold text-neutral-900 mb-1">{t('dashboard.alarms')}</h2>
+          <p className="text-xs text-neutral-600 mb-3">{t('dashboard.last7')}</p>
           <AlarmsBarChart data={stats.alarmesParJour7j} />
         </Card>
 
         <Card>
-          <h2 className="text-base font-semibold text-neutral-900 mb-1">Alarmes par type</h2>
-          <p className="text-xs text-neutral-600 mb-3">Toutes périodes confondues</p>
+          <h2 className="text-base font-semibold text-neutral-900 mb-1">{t('dashboard.byType')}</h2>
+          <p className="text-xs text-neutral-600 mb-3">{t('dashboard.allPeriods')}</p>
           <CategoryBarChart
             color="#B91C1C"
             data={stats.alarmesParType.map((a) => ({
@@ -269,8 +271,8 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <h2 className="text-base font-semibold text-neutral-900 mb-1">Répartition des modes</h2>
-          <p className="text-xs text-neutral-600 mb-3">Tous les traceurs</p>
+          <h2 className="text-base font-semibold text-neutral-900 mb-1">{t('dashboard.modes')}</h2>
+          <p className="text-xs text-neutral-600 mb-3">{t('dashboard.allTrackers')}</p>
           <CategoryBarChart
             color="#0057FF"
             data={stats.repartitionModes.map((m) => ({
@@ -280,8 +282,8 @@ export default function DashboardPage() {
         </Card>
 
         <Card className="lg:col-span-2">
-          <h2 className="text-base font-semibold text-neutral-900 mb-1">Santé batterie</h2>
-          <p className="text-xs text-neutral-600 mb-3">Traceurs actifs, par tranche de charge</p>
+          <h2 className="text-base font-semibold text-neutral-900 mb-1">{t('dashboard.battery')}</h2>
+          <p className="text-xs text-neutral-600 mb-3">{t('dashboard.batterySub')}</p>
           <BatteryBarChart data={stats.repartitionBatterie} />
         </Card>
       </motion.div>

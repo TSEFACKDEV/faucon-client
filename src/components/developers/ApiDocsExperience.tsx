@@ -241,41 +241,6 @@ $position = ownerGet(
     '/owner/vehicles/' . $vehicleId . '/position/last'
 );`;
 
-const dartSample = `import 'package:dio/dio.dart';
-
-final api = Dio(BaseOptions(
-  baseUrl: '${API}',
-  connectTimeout: const Duration(seconds: 10),
-  receiveTimeout: const Duration(seconds: 10),
-  headers: {
-    // Ne jamais embarquer la clé dans une application publiée sur un store
-    // si elle donne accès à toute la flotte. Idéalement, passez par votre
-    // propre backend.
-    'X-API-Key': const String.fromEnvironment('FAUCON_API_KEY'),
-  },
-));
-
-Future<List<dynamic>> fetchVehicles() async {
-  final response = await api.get('/owner/vehicles');
-  return response.data['data'] as List<dynamic>;
-}
-
-Future<Map<String, dynamic>?> lastPosition(String vehicleId) async {
-  final response = await api.get(
-    '/owner/vehicles/$vehicleId/position/last',
-  );
-  final data = response.data['data'];
-  return data == null ? null : Map<String, dynamic>.from(data);
-}
-
-Future<List<dynamic>> history(String vehicleId, String date) async {
-  final response = await api.get(
-    '/owner/vehicles/$vehicleId/positions',
-    queryParameters: {'date': date},
-  );
-  return response.data['data'] as List<dynamic>;
-}`;
-
 const kotlinSample = `import okhttp3.*
 import org.json.JSONObject
 
@@ -349,28 +314,6 @@ socket.on('vehicle_mode', ({ vehiculeId, modeActuel }) => {
   console.log(vehiculeId, modeActuel);
 });`;
 
-const realtimeDart = `import 'package:socket_io_client/socket_io_client.dart' as io;
-
-final socket = io.io(
-  '${SOCKET}',
-  io.OptionBuilder()
-      .setTransports(['websocket'])
-      .setAuth({'token': const String.fromEnvironment('FAUCON_API_KEY')})
-      .build(),
-);
-
-socket.onConnect((_) {
-  socket.emit('subscribe', ['VEHICLE_ID_1', 'VEHICLE_ID_2']);
-});
-
-socket.on('position_update', (data) {
-  print('$data');
-});
-
-socket.on('alarm', (data) {
-  print('Alerte : $data');
-});`;
-
 export default function ApiDocsExperience() {
   const [language, setLanguage] = useState('javascript');
 
@@ -379,7 +322,6 @@ export default function ApiDocsExperience() {
     javascript: { label: 'JavaScript / Node.js', code: jsSample },
     python: { label: 'Python', code: pythonSample },
     php: { label: 'PHP', code: phpSample },
-    dart: { label: 'Dart / Flutter', code: dartSample },
     kotlin: { label: 'Kotlin / Android', code: kotlinSample },
   };
 
@@ -670,9 +612,8 @@ export default function ApiDocsExperience() {
               </table>
             </div>
 
-            <div className="mt-6 grid gap-4 xl:grid-cols-2">
+            <div className="mt-6">
               <CodeBlock language="javascript" title="Socket.IO — JavaScript" code={realtimeJs} />
-              <CodeBlock language="dart" title="Socket.IO — Flutter" code={realtimeDart} />
             </div>
 
             <Callout tone="info">

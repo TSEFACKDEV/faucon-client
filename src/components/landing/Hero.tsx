@@ -13,16 +13,17 @@ import {
   IoSpeedometerOutline,
 } from 'react-icons/io5';
 import { easeOut, SectionLabel } from './Reveal';
-
-const assurances = [
-  'Temps réel',
-  'Alertes instantanées',
-  'Historique des trajets',
-  'Web + mobile',
-];
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 export default function Hero() {
+  const { t } = useLanguage();
   const reduce = useReducedMotion();
+  const assurances = [
+    t('hero.assurance1'),
+    t('hero.assurance2'),
+    t('hero.assurance3'),
+    t('hero.assurance4'),
+  ];
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-800 to-primary-600 pb-20 pt-32 md:pb-28 md:pt-36">
@@ -38,7 +39,7 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: easeOut }}
           >
-            <SectionLabel tone="white">Télémétrie de flotte · Cameroun</SectionLabel>
+            <SectionLabel tone="white">{t('hero.badge')}</SectionLabel>
           </motion.div>
 
           <motion.h1
@@ -47,12 +48,12 @@ export default function Hero() {
             transition={{ duration: 0.65, delay: 0.08, ease: easeOut }}
             className="mt-6 max-w-2xl text-[2.65rem] font-bold leading-[1.02] tracking-[-0.045em] text-white sm:text-6xl xl:text-[4.25rem]"
           >
-            Chaque véhicule.
+            {t('hero.title1')}
             <span className="block bg-gradient-to-r from-accent-200 via-accent-300 to-gold-300 bg-clip-text text-transparent">
-              À vue.
+              {t('hero.title2')}
             </span>
             <span className="block bg-gradient-to-r from-accent-200 via-accent-300 to-gold-300 bg-clip-text text-transparent">
-              En temps réel.
+              {t('hero.title3')}
             </span>
           </motion.h1>
 
@@ -62,10 +63,7 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.18, ease: easeOut }}
             className="mt-6 max-w-xl text-base leading-relaxed text-primary-100/85 md:text-lg"
           >
-            Faucon relie traceurs GPS, véhicules et équipes dans une seule tour de
-            contrôle : position live, alertes terrain, historique et diagnostic à
-            distance. Pensé pour les routes africaines, pas seulement pour les
-            tableaux de bord.
+            {t('hero.body')}
           </motion.p>
 
           <motion.div
@@ -79,14 +77,14 @@ export default function Hero() {
               id="demo"
               className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 px-6 py-4 text-sm font-bold text-primary-900 shadow-[0_14px_40px_rgba(255,176,0,0.3)] transition-transform hover:-translate-y-0.5"
             >
-              Demander une démo
+              {t('hero.demo')}
               <IoArrowForwardOutline className="transition-transform group-hover:translate-x-1" />
             </a>
             <a
               href="#solution"
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/5 px-6 py-4 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
             >
-              Découvrir la solution
+              {t('hero.discover')}
             </a>
           </motion.div>
 

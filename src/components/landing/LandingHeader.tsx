@@ -5,15 +5,18 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { IoCloseOutline, IoMenuOutline, IoArrowForwardOutline } from 'react-icons/io5';
 import Logo from '@/components/ui/Logo';
+import LanguageToggle from '@/components/ui/LanguageToggle';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 const links = [
-  { href: '#solution', label: 'Solution' },
-  { href: '#innovation', label: 'Innovation' },
-  { href: '#marche', label: 'Marché' },
-  { href: '/developpeurs', label: 'Développeurs' },
+  { href: '#solution', key: 'nav.solution' },
+  { href: '#innovation', key: 'nav.innovation' },
+  { href: '#marche', key: 'nav.market' },
+  { href: '/developpeurs', key: 'nav.developers' },
 ];
 
 export default function LandingHeader() {
+  const { t } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -55,12 +58,13 @@ export default function LandingHeader() {
                   : 'text-primary-100 hover:text-white'
               }`}
             >
-              {link.label}
+              {t(link.key)}
             </a>
           ))}
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
+          <LanguageToggle tone={scrolled ? 'light' : 'dark'} />
           <Link
             href="/login"
             className={`rounded-[10px] px-4 py-2.5 text-sm font-semibold transition-colors ${
@@ -69,13 +73,13 @@ export default function LandingHeader() {
                 : 'text-white/90 hover:bg-white/10'
             }`}
           >
-            Espace client
+            {t('nav.client')}
           </Link>
           <a
             href="#contact"
             className="group inline-flex items-center gap-2 rounded-[10px] bg-gradient-to-r from-gold-400 to-gold-500 px-4 py-2.5 text-sm font-bold text-primary-900 shadow-[0_8px_24px_rgba(255,176,0,0.28)] transition-transform hover:-translate-y-0.5"
           >
-            Demander une démo
+            {t('nav.demo')}
             <IoArrowForwardOutline className="transition-transform group-hover:translate-x-0.5" />
           </a>
         </div>
@@ -83,7 +87,7 @@ export default function LandingHeader() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
+          aria-label={open ? t('nav.close') : t('nav.open')}
           aria-expanded={open}
           className={`inline-flex h-11 w-11 items-center justify-center rounded-xl transition-colors lg:hidden ${
             scrolled ? 'text-primary-900 hover:bg-neutral-50' : 'text-white hover:bg-white/10'
@@ -111,7 +115,7 @@ export default function LandingHeader() {
                     onClick={() => setOpen(false)}
                     className="border-b border-neutral-50 py-4 text-base font-semibold text-neutral-900"
                   >
-                    {link.label}
+                    {t(link.key)}
                   </Link>
                 ) : (
                   <a
@@ -120,7 +124,7 @@ export default function LandingHeader() {
                     onClick={() => setOpen(false)}
                     className="border-b border-neutral-50 py-4 text-base font-semibold text-neutral-900"
                   >
-                    {link.label}
+                    {t(link.key)}
                   </a>
                 )
               )}
@@ -129,16 +133,19 @@ export default function LandingHeader() {
                 onClick={() => setOpen(false)}
                 className="py-4 text-base font-semibold text-primary-700"
               >
-                Espace client
+                {t('nav.client')}
               </Link>
               <a
                 href="#contact"
                 onClick={() => setOpen(false)}
                 className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 px-5 py-3.5 text-sm font-bold text-primary-900"
               >
-                Demander une démo
+                {t('nav.demo')}
                 <IoArrowForwardOutline />
               </a>
+              <div className="pt-4">
+                <LanguageToggle tone="light" />
+              </div>
             </nav>
           </motion.div>
         )}
