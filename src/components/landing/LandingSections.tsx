@@ -31,6 +31,7 @@ import {
   IoStatsChartOutline,
 } from 'react-icons/io5';
 import { Reveal, SectionLabel } from './Reveal';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 /* ─────────────────────────── PROBLÈME ─────────────────────────── */
 
@@ -56,19 +57,18 @@ const problems = [
 ];
 
 export function ProblemSection() {
+  const { t } = useLanguage();
   return (
     <section id="probleme" className="relative overflow-hidden bg-neutral-0 py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <Reveal>
-          <SectionLabel>Le problème</SectionLabel>
+          <SectionLabel>{t('section.problem')}</SectionLabel>
           <div className="mt-5 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
             <h2 className="max-w-3xl text-3xl font-bold tracking-[-0.035em] text-neutral-900 md:text-5xl">
-              Sans visibilité, chaque véhicule est un angle mort.
+              {t('problem.title')}
             </h2>
             <p className="max-w-xl text-sm leading-relaxed text-neutral-600 md:text-base lg:justify-self-end">
-              Sur les routes camerounaises, la question n’est pas seulement « où est le
-              véhicule ? ». C’est : est-il en sécurité, sur son itinéraire, et qui doit
-              agir maintenant ?
+              {t('problem.body')}
             </p>
           </div>
         </Reveal>
@@ -141,19 +141,19 @@ const features = [
 ];
 
 export function SolutionSection() {
+  const { t } = useLanguage();
   return (
     <section id="solution" className="relative bg-white py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div className="grid gap-12 lg:grid-cols-[0.88fr_1.12fr] lg:gap-16">
           <Reveal>
-            <SectionLabel>La solution</SectionLabel>
+            <SectionLabel>{t('section.solution')}</SectionLabel>
             <h2 className="mt-5 text-3xl font-bold tracking-[-0.035em] text-neutral-900 md:text-5xl">
-              Une plateforme.
-              <span className="block text-primary-600">Un boîtier. Toute la flotte.</span>
+              {t('solution.title1')}
+              <span className="block text-primary-600">{t('solution.title2')}</span>
             </h2>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-neutral-600 md:text-base">
-              Faucon assemble le traceur, le réseau, le serveur et les interfaces
-              web/mobile. Une seule chaîne, du terrain jusqu’à la décision.
+              {t('solution.body')}
             </p>
 
             <div className="mt-8 space-y-3 rounded-2xl border border-primary-100 bg-primary-50/60 p-5">
@@ -224,21 +224,19 @@ const opportunities = [
 ];
 
 export function OpportunitySection() {
+  const { t } = useLanguage();
   return (
     <section id="marche" className="relative overflow-hidden bg-neutral-0 py-24 md:py-32">
       <div className="absolute inset-0 bg-blueprint opacity-40" />
       <div className="relative mx-auto max-w-7xl px-5 md:px-8">
         <Reveal>
-          <SectionLabel>L’opportunité</SectionLabel>
+          <SectionLabel>{t('section.opportunity')}</SectionLabel>
           <div className="mt-5 max-w-4xl">
             <h2 className="text-3xl font-bold tracking-[-0.035em] text-neutral-900 md:text-5xl">
-              La digitalisation des flottes africaines ne fait que commencer.
+              {t('opportunity.title')}
             </h2>
             <p className="mt-5 max-w-2xl text-sm leading-relaxed text-neutral-600 md:text-base">
-              L’urbanisation, la croissance logistique et la demande de preuve créent un
-              besoin structurel : savoir où sont les véhicules, comment ils sont utilisés
-              et ce qui mérite une intervention. Faucon se positionne sur ce besoin avec
-              une approche terrain, pas une copie de solutions conçues ailleurs.
+              {t('opportunity.body')}
             </p>
           </div>
         </Reveal>
@@ -323,6 +321,7 @@ const innovations = [
 ];
 
 export function InnovationSection() {
+  const { t } = useLanguage();
   return (
     <section
       id="innovation"
@@ -332,16 +331,14 @@ export function InnovationSection() {
       <div className="pointer-events-none absolute -right-32 top-20 h-[420px] w-[420px] rounded-full bg-accent-500/15 blur-3xl" />
       <div className="relative mx-auto max-w-7xl px-5 md:px-8">
         <Reveal>
-          <SectionLabel tone="white">L’innovation</SectionLabel>
+          <SectionLabel tone="white">{t('section.innovation')}</SectionLabel>
           <div className="mt-5 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
             <h2 className="max-w-3xl text-3xl font-bold tracking-[-0.035em] md:text-5xl">
-              Un traceur pensé pour le terrain,
-              <span className="block text-accent-300">pas seulement pour la démo.</span>
+              {t('innovation.title1')}
+              <span className="block text-accent-300">{t('innovation.title2')}</span>
             </h2>
             <p className="max-w-lg text-sm leading-relaxed text-primary-100/75 md:text-base lg:justify-self-end">
-              La différence ne se joue pas sur la carte. Elle se joue sur la capacité du
-              boîtier à continuer à travailler quand le réseau, l’énergie ou le GPS ne
-              coopèrent pas.
+              {t('innovation.body')}
             </p>
           </div>
         </Reveal>
@@ -456,19 +453,19 @@ const challenges = [
 ];
 
 export function ChallengeSection() {
+  const { t } = useLanguage();
   return (
     <section id="defi" className="bg-white py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <Reveal>
-          <SectionLabel>Le défi</SectionLabel>
+          <SectionLabel>{t('section.challenge')}</SectionLabel>
           <div className="mt-5 grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
             <h2 className="max-w-3xl text-3xl font-bold tracking-[-0.035em] text-neutral-900 md:text-5xl">
-              Le vrai défi n’est pas la carte.
-              <span className="block text-primary-600">C’est la fiabilité.</span>
+              {t('challenge.title1')}
+              <span className="block text-primary-600">{t('challenge.title2')}</span>
             </h2>
             <p className="max-w-lg text-sm leading-relaxed text-neutral-600 md:text-base lg:justify-self-end">
-              Nous ne promettons pas un terrain parfait. Nous construisons un système qui
-              continue à produire de la information utile quand le terrain ne l’est pas.
+              {t('challenge.body')}
             </p>
           </div>
         </Reveal>
@@ -509,6 +506,7 @@ export function ChallengeSection() {
 /* ─────────────────────────── AMBITION ─────────────────────────── */
 
 export function AmbitionSection() {
+  const { t } = useLanguage();
   const reduce = useReducedMotion();
   return (
     <section
@@ -520,15 +518,13 @@ export function AmbitionSection() {
       <div className="relative mx-auto max-w-7xl px-5 md:px-8">
         <div className="grid gap-14 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <Reveal>
-            <SectionLabel tone="white">L’ambition</SectionLabel>
+            <SectionLabel tone="white">{t('section.ambition')}</SectionLabel>
             <h2 className="mt-5 text-3xl font-bold tracking-[-0.04em] md:text-6xl">
-              Devenir la référence de la télématique
-              <span className="block text-gold-300">en Afrique centrale.</span>
+              {t('ambition.title1')}
+              <span className="block text-gold-300">{t('ambition.title2')}</span>
             </h2>
             <p className="mt-6 max-w-xl text-sm leading-relaxed text-primary-100/75 md:text-base">
-              Partir du Cameroun, comprendre les routes, les usages et les contraintes
-              locales, puis étendre un modèle qui fonctionne réellement. Pas une solution
-              importée avec un drapeau changé : une infrastructure pensée ici, pour ici.
+              {t('ambition.body')}
             </p>
             <div className="mt-9 space-y-0">
               <AmbitionStep
@@ -662,6 +658,7 @@ function AmbitionStep({
 /* ─────────────────────────── CONTACT ─────────────────────────── */
 
 export function ContactSection() {
+  const { t } = useLanguage();
   const [status, setStatus] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -695,14 +692,13 @@ export function ContactSection() {
       <div className="relative mx-auto max-w-7xl px-5 md:px-8">
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <Reveal>
-            <SectionLabel>Passer à l’action</SectionLabel>
+            <SectionLabel>{t('section.action')}</SectionLabel>
             <h2 className="mt-5 text-3xl font-bold tracking-[-0.04em] text-neutral-900 md:text-5xl">
-              Mettez votre flotte
-              <span className="block text-primary-600">sous contrôle.</span>
+              {t('action.title1')}
+              <span className="block text-primary-600">{t('action.title2')}</span>
             </h2>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-neutral-600 md:text-base">
-              Dites-nous ce que vous gérez : véhicules, motos, engins, marchandises. Nous
-              revenons vers vous avec une démonstration adaptée à votre réalité.
+              {t('action.body')}
             </p>
 
             <div className="mt-8 space-y-4">

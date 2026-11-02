@@ -667,7 +667,7 @@ export default function ApiDocsExperience() {
                 <ul className="mt-3 space-y-2 text-xs leading-relaxed text-neutral-600">
                   <li><code>200</code> — succès</li>
                   <li><code>400</code> — date ou paramètre invalide</li>
-                  <li><code>401</code> — clé absente, invalide, révoquée ou expirée</li>
+                  <li><code>401</code> — clé absente, invalide ou révoquée</li>
                   <li><code>404</code> — véhicule introuvable ou non rattaché à votre compte</li>
                   <li><code>429</code> — limite de débit, respecter <code>Retry-After</code></li>
                   <li><code>500</code> — erreur serveur, réessayer avec backoff</li>
