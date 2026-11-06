@@ -1,15 +1,22 @@
 import { AlarmType, DeviceMode } from '@/types';
 import { format, formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { enUS, fr } from 'date-fns/locale';
+
+const currentLanguage = (): 'fr' | 'en' => {
+  if (typeof document !== 'undefined' && document.documentElement.lang === 'en') return 'en';
+  return 'fr';
+};
+
+const dateLocale = () => (currentLanguage() === 'en' ? enUS : fr);
 
 export const formatDate = (iso: string): string =>
-  format(new Date(iso), 'dd/MM/yyyy', { locale: fr });
+  format(new Date(iso), currentLanguage() === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy', { locale: dateLocale() });
 
 export const formatDateTime = (iso: string): string =>
-  format(new Date(iso), 'dd MMM yyyy · HH:mm', { locale: fr });
+  format(new Date(iso), currentLanguage() === 'en' ? 'MMM d, yyyy · HH:mm' : 'dd MMM yyyy · HH:mm', { locale: dateLocale() });
 
 export const timeAgo = (iso: string): string =>
-  formatDistanceToNow(new Date(iso), { locale: fr, addSuffix: true });
+  formatDistanceToNow(new Date(iso), { locale: dateLocale(), addSuffix: true });
 
 // Même seuil que le backend (EN_LIGNE_SEUIL_MS = 10 min) : strictement
 // supérieur à la plus longue période d'émission du firmware (STANDBY à
@@ -41,16 +48,24 @@ export const getBatteryColor = (level: number): string => {
   return '#15803D';                    // success-strong
 };
 
-export const ALARM_LABELS: Record<AlarmType, string> = {
-  SORTIE_ZONE:         'Sortie de zone',
-  VITESSE_EXCESSIVE:   'Vitesse excessive',
-  DECOLLEMENT_TRACEUR: 'Retrait dispositif',
-  NON_MOUVEMENT:       'Immobilisation',
-  BATTERIE_FAIBLE:     'Batterie faible',
+const ALARM_LABELS_I18N: Record<AlarmType, { fr: string; en: string }> = {
+  SORTIE_ZONE:         { fr: 'Sortie de zone', en: 'Geofence exit' },
+  VITESSE_EXCESSIVE:   { fr: 'Vitesse excessive', en: 'Speeding' },
+  DECOLLEMENT_TRACEUR: { fr: 'Retrait dispositif', en: 'Device removed' },
+  NON_MOUVEMENT:       { fr: 'Immobilisation', en: 'Vehicle idle' },
+  BATTERIE_FAIBLE:     { fr: 'Batterie faible', en: 'Low battery' },
 };
 
-export const MODE_LABELS: Record<DeviceMode, string> = {
-  WORK:    'Continu (WORK)',
-  MOVE:    'Adaptatif (MOVE)',
-  STANDBY: 'Veille (STANDBY)',
+const MODE_LABELS_I18N: Record<DeviceMode, { fr: string; en: string }> = {
+  WORK:    { fr: 'Continu (WORK)', en: 'Continuous (WORK)' },
+  MOVE:    { fr: 'Adaptatif (MOVE)', en: 'Adaptive (MOVE)' },
+  STANDBY: { fr: 'Veille (STANDBY)', en: 'Standby (STANDBY)' },
 };
+
+export const ALARM_TYPES = Object.keys(ALARM_LABELS_I18N) as AlarmType[];
+
+export const getAlarmLabel = (type: AlarmType): string =>
+  ALARM_LABELS_I18N[type][currentLanguage()];
+
+export const getModeLabel = (mode: DeviceMode): string =>
+  MODE_LABELS_I18N[mode][currentLanguage()];

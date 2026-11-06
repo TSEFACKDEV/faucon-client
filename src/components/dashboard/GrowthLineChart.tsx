@@ -1,20 +1,23 @@
 'use client';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { enUS, fr } from 'date-fns/locale';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 interface Props {
   data: { date: string; total: number }[];
 }
 
 export default function GrowthLineChart({ data }: Props) {
+  const { language, tr } = useLanguage();
+  const locale = language === 'en' ? enUS : fr;
   return (
     <ResponsiveContainer width="100%" height={220}>
       <LineChart data={data} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
         <CartesianGrid stroke="#E1E8F2" strokeDasharray="0" vertical={false} />
         <XAxis
           dataKey="date"
-          tickFormatter={(d) => format(parseISO(d), 'd MMM', { locale: fr })}
+          tickFormatter={(d) => format(parseISO(d), 'd MMM', { locale })}
           tick={{ fill: '#74839C', fontSize: 11 }}
           axisLine={{ stroke: '#C9D3E3' }}
           tickLine={false}
@@ -28,8 +31,8 @@ export default function GrowthLineChart({ data }: Props) {
           width={28}
         />
         <Tooltip
-          labelFormatter={(d) => format(parseISO(String(d)), 'd MMMM yyyy', { locale: fr })}
-          formatter={(value) => [value, 'Nouveaux comptes']}
+          labelFormatter={(d) => format(parseISO(String(d)), 'd MMMM yyyy', { locale })}
+          formatter={(value) => [value, tr('Nouveaux comptes', 'New accounts')]}
           contentStyle={{ borderRadius: 10, border: '1px solid #E1E8F2', fontSize: 12.5 }}
         />
         <Line

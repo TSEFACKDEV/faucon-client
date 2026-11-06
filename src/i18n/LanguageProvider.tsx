@@ -200,8 +200,8 @@ const messages: Record<Language, Record<string, string>> = {
     'dashboard.trackers': 'Trackers',
     'dashboard.online': 'Online',
     'dashboard.active': 'Active',
-    'dashboard.unacked': 'Unacknowledged alerts',
-    'dashboard.today': "Today's alerts",
+    'dashboard.unacked': 'Unacknowledged',
+    'dashboard.today': 'Alerts today',
     'dashboard.mapTitle': 'Trackers on the map',
     'dashboard.mapCount': 'online ·',
     'dashboard.mapKnown': 'with a known position',
@@ -231,6 +231,8 @@ interface LanguageContextValue {
   language: Language;
   setLanguage: (language: Language) => void;
   t: (key: string, vars?: Record<string, string | number>) => string;
+  /** Traduction directe pour les textes locaux : tr('Français', 'English'). */
+  tr: (fr: string, en: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -245,6 +247,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       ? queryLanguage
       : (saved === 'en' || saved === 'fr' ? saved : null);
     if (next) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- initial language sync from URL/localStorage after hydration
       setLanguageState(next);
       document.documentElement.lang = next;
     }
@@ -269,9 +272,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     [language]
   );
 
+  const tr = useCallback(
+    (fr: string, en: string) => (language === 'en' ? en : fr),
+    [language]
+  );
+
   const value = useMemo(
-    () => ({ language, setLanguage, t }),
-    [language, setLanguage, t]
+    () => ({ language, setLanguage, t, tr }),
+    [language, setLanguage, t, tr]
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

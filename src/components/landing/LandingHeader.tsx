@@ -16,7 +16,7 @@ const links = [
 ];
 
 export default function LandingHeader() {
-  const { t } = useLanguage();
+  const { t, tr } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -43,11 +43,11 @@ export default function LandingHeader() {
       }`}
     >
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 md:px-8">
-        <Link href="/" aria-label="Faucon — accueil" className="shrink-0">
+        <Link href="/" aria-label={tr('Faucon — accueil', 'Faucon — home')} className="shrink-0">
           <Logo tone={scrolled ? 'color' : 'white'} size={30} />
         </Link>
 
-        <nav className="hidden items-center gap-8 lg:flex" aria-label="Navigation principale">
+        <nav className="hidden items-center gap-8 lg:flex" aria-label={tr('Navigation principale', 'Main navigation')}>
           {links.map((link) => (
             <a
               key={link.href}
@@ -106,7 +106,7 @@ export default function LandingHeader() {
             transition={{ duration: 0.2 }}
             className="border-t border-neutral-100 bg-white px-5 pb-6 pt-3 lg:hidden"
           >
-            <nav className="flex flex-col" aria-label="Navigation mobile">
+            <nav className="flex flex-col" aria-label={tr('Navigation mobile', 'Mobile navigation')}>
               {links.map((link) =>
                 link.href.startsWith('/') ? (
                   <Link

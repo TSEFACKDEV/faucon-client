@@ -9,7 +9,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { IoMailOutline, IoLockClosedOutline, IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 
-import { loginSchema } from '@/lib/validations';
+import { getLoginSchema } from '@/lib/validations';
 import { getErrorMessage } from '@/lib/errors';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
@@ -26,7 +26,7 @@ interface LoginFormValues {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { setUser } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -79,7 +79,7 @@ export default function LoginPage() {
 
         <Formik
           initialValues={{ email: '', password: '' }}
-          validationSchema={loginSchema}
+          validationSchema={getLoginSchema(language)}
           validateOnChange={false}
           validateOnBlur={false}
           onSubmit={handleSubmit}

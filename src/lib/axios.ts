@@ -74,7 +74,7 @@ api.interceptors.response.use(
         // la page — un redirect immédiat et silencieux l'efface sans
         // prévenir. On laisse le toast le temps de s'afficher avant de
         // couper la page.
-        toast.error('Session expirée. Vous allez être redirigé vers la connexion.');
+        toast.error(document.documentElement.lang === 'en' ? 'Session expired. You will be redirected to sign in.' : 'Session expirée. Vous allez être redirigé vers la connexion.');
         setTimeout(() => {
           window.location.href = '/login';
         }, 1500);

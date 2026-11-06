@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function DashboardLayout({ children }: Props) {
-  const { t } = useLanguage();
+  const { t, tr } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const { setUser, clearUser } = useAuthStore();
@@ -87,7 +87,7 @@ export default function DashboardLayout({ children }: Props) {
         <button
           onClick={() => setMenuOpen(true)}
           className="text-white/85 hover:text-white transition-colors p-1"
-          aria-label="Ouvrir le menu"
+          aria-label={tr('Ouvrir le menu', 'Open menu')}
         >
           <IoMenuOutline size={24} />
         </button>
@@ -119,7 +119,7 @@ export default function DashboardLayout({ children }: Props) {
               onClick={() => reconnectRealtime()}
               className="shrink-0 font-semibold underline underline-offset-2 hover:no-underline"
             >
-              Recharger
+              {tr('Recharger', 'Reload')}
             </button>
           </div>
         )}

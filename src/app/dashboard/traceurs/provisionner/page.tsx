@@ -9,12 +9,13 @@ import {
 } from 'react-icons/io5';
 import { adminService } from '@/services/admin.service';
 import { VehiculeProvisionne } from '@/types';
-import { provisionSchema } from '@/lib/validations';
+import { getProvisionSchema } from '@/lib/validations';
 import { getErrorMessage } from '@/lib/errors';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 const container = {
   hidden: {},
@@ -26,6 +27,7 @@ const item = {
 };
 
 export default function ProvisionnerPage() {
+  const { tr, language } = useLanguage();
   const [provisioned, setProvisioned] = useState<VehiculeProvisionne[]>([]);
   const [batchId, setBatchId] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -37,9 +39,9 @@ export default function ProvisionnerPage() {
         setCopiedId(id);
         setTimeout(() => setCopiedId(null), 1500);
       }
-      toast.success('Copié');
+      toast.success(tr('Copié', 'Copied'));
     } catch {
-      toast.error('Impossible de copier dans le presse-papiers. Vérifiez les autorisations du navigateur.');
+      toast.error(tr('Impossible de copier dans le presse-papiers. Vérifiez les autorisations du navigateur.', 'Unable to copy to the clipboard. Check browser permissions.'));
     }
   };
 
@@ -59,9 +61,9 @@ export default function ProvisionnerPage() {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="p-8 flex flex-col gap-6 max-w-3xl">
       <motion.div variants={item}>
-        <h1 className="text-2xl font-semibold text-neutral-900">Provisionner des traceurs</h1>
+        <h1 className="text-2xl font-semibold text-neutral-900">{tr('Provisionner des traceurs', 'Provision trackers')}</h1>
         <p className="text-sm text-neutral-600 mt-1">
-          Génère en série des identifiants de traceurs (tracker ID + pin d&apos;activation)
+          {tr('Génère en série des identifiants de traceurs (tracker ID + pin d’activation)', 'Generates tracker identifiers in batches (tracker ID + activation PIN)')}
         </p>
       </motion.div>
 
@@ -70,23 +72,22 @@ export default function ProvisionnerPage() {
           <div className="flex items-start gap-3 bg-primary-50 border border-primary-200 rounded-[10px] p-4 mb-6">
             <IoInformationCircleOutline size={20} className="text-primary-600 shrink-0 mt-0.5" />
             <p className="text-sm text-primary-700">
-              Outil interne d&apos;exploitation : la clé de provisioning est fournie par l&apos;équipe,
-              elle n&apos;est jamais stockée. Maximum <strong>500</strong> traceurs par lot.
+              {tr('Outil interne d’exploitation : la clé de provisioning est fournie par l’équipe, elle n’est jamais stockée. Maximum', 'Internal operations tool: the provisioning key is provided by the team and is never stored. Maximum')} <strong>500</strong> {tr('traceurs par lot.', 'trackers per batch.')}
             </p>
           </div>
 
           <Formik
             initialValues={{ count: 10, prefix: 'FCN', apiKey: '' }}
-            validationSchema={provisionSchema}
+            validationSchema={getProvisionSchema(language)}
             onSubmit={async (values, { setSubmitting }) => {
               try {
                 const result = await adminService.provisionner(values.count, values.prefix, values.apiKey || undefined);
                 setProvisioned(result);
                 setBatchId(Date.now());
                 setCopiedId(null);
-                toast.success(`${result.length} traceur(s) provisionné(s)`);
+                toast.success(`${result.length} ${tr('traceur(s) provisionné(s)', 'tracker(s) provisioned')}`);
               } catch (err: unknown) {
-                toast.error(getErrorMessage(err, 'Échec du provisioning. Vérifiez la clé et le nombre demandé, puis réessayez.'));
+                toast.error(getErrorMessage(err, tr('Échec du provisioning. Vérifiez la clé et le nombre demandé, puis réessayez.', 'Provisioning failed. Check the key and requested count, then try again.')));
                 setProvisioned([]);
                 setBatchId(null);
               } finally {
@@ -98,18 +99,18 @@ export default function ProvisionnerPage() {
               <Form className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Clé de provisioning"
+                    label={tr('Clé de provisioning', 'Provisioning key')}
                     name="apiKey"
                     type="password"
                     autoComplete="off"
                     value={values.apiKey}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    placeholder="Saisissez la clé API"
+                    placeholder={tr('Saisissez la clé API', 'Enter the API key')}
                     rightIcon={<IoKeyOutline size={16} className="text-neutral-400" />}
                   />
                   <Input
-                    label="Nombre de traceurs"
+                    label={tr('Nombre de traceurs', 'Number of trackers')}
                     name="count"
                     type="number"
                     min={1}
@@ -122,17 +123,17 @@ export default function ProvisionnerPage() {
                   />
                 </div>
                 <Input
-                  label="Préfixe du tracker ID"
+                  label={tr('Préfixe du tracker ID', 'Tracker ID prefix')}
                   name="prefix"
                   value={values.prefix}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   error={touched.prefix ? errors.prefix : undefined}
-                  placeholder="Ex : FCN"
+                  placeholder={tr('Ex : FCN', 'E.g. FCN')}
                 />
                 <Button type="submit" loading={isSubmitting} className="mt-1 self-start">
                   <IoHardwareChipOutline size={16} />
-                  Provisionner
+                  {tr('Provisionner', 'Provision')}
                 </Button>
               </Form>
             )}
@@ -145,16 +146,16 @@ export default function ProvisionnerPage() {
           <Card padding={false}>
             <div className="px-6 pt-5 pb-3 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <h2 className="text-base font-semibold text-neutral-900">Lot généré</h2>
+                <h2 className="text-base font-semibold text-neutral-900">{tr('Lot généré', 'Generated batch')}</h2>
                 <Badge color="success">
                   <IoCheckmarkCircleOutline size={13} className="mr-1" />
-                  {provisioned.length} traceur(s)
+                  {provisioned.length} {tr('traceur(s)', 'tracker(s)')}
                 </Badge>
-                {batchId && <span className="text-xs text-neutral-500">Lot #{batchId}</span>}
+                {batchId && <span className="text-xs text-neutral-500">{tr('Lot', 'Batch')} #{batchId}</span>}
               </div>
               <Button variant="secondary" size="sm" onClick={downloadCsv}>
                 <IoDownloadOutline size={15} />
-                Export CSV
+                {tr('Export CSV', 'Export CSV')}
               </Button>
             </div>
             <div className="overflow-x-auto">
@@ -163,8 +164,8 @@ export default function ProvisionnerPage() {
                   <tr className="text-left text-xs uppercase tracking-wide text-neutral-500 border-b border-neutral-100">
                     <th className="px-6 py-3 font-semibold">#</th>
                     <th className="px-6 py-3 font-semibold">Tracker ID</th>
-                    <th className="px-6 py-3 font-semibold">Pin d&apos;activation</th>
-                    <th className="px-6 py-3 font-semibold text-right">Copier</th>
+                    <th className="px-6 py-3 font-semibold">{tr('Pin d’activation', 'Activation PIN')}</th>
+                    <th className="px-6 py-3 font-semibold text-right">{tr('Copier', 'Copy')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -191,7 +192,7 @@ export default function ProvisionnerPage() {
                           ) : (
                             <IoCopyOutline size={15} />
                           )}
-                          Copier
+                          {tr('Copier', 'Copy')}
                         </Button>
                       </td>
                     </tr>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { IoCheckmarkOutline, IoCopyOutline } from 'react-icons/io5';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 export default function CodeBlock({
   code,
@@ -12,6 +13,7 @@ export default function CodeBlock({
   language: string;
   title?: string;
 }) {
+  const { tr } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -40,10 +42,10 @@ export default function CodeBlock({
           type="button"
           onClick={copy}
           className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-semibold text-primary-100/55 transition-colors hover:bg-white/10 hover:text-white"
-          aria-label="Copier le code"
+          aria-label={tr('Copier le code', 'Copy code')}
         >
           {copied ? <IoCheckmarkOutline /> : <IoCopyOutline />}
-          {copied ? 'Copié' : 'Copier'}
+          {copied ? tr('Copié', 'Copied') : tr('Copier', 'Copy')}
         </button>
       </div>
       <pre className="max-h-[560px] overflow-auto p-4 text-[11px] leading-relaxed text-primary-100/85">

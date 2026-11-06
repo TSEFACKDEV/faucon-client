@@ -13,6 +13,10 @@ import {
   IoSwapHorizontalOutline,
 } from 'react-icons/io5';
 import { Reveal, SectionLabel } from './Reveal';
+import { useLanguage } from '@/i18n/LanguageProvider';
+
+type Localized = { fr: string; en: string };
+const L = (fr: string, en: string): Localized => ({ fr, en });
 
 const samples = {
   curl: `curl -s "https://api.faucon.cm/api/owner/vehicles" \\
@@ -66,27 +70,40 @@ const tabs = [
 const capabilities = [
   {
     icon: <IoFlashOutline />,
-    title: 'Temps réel',
-    text: 'Un flux Socket.IO en lecture seule pour les positions et alertes de vos traceurs.',
+    title: L('Temps réel', 'Real time'),
+    text: L(
+      'Un flux Socket.IO en lecture seule pour les positions et alertes de vos traceurs.',
+      'A read-only Socket.IO stream for your trackers’ positions and alerts.'
+    ),
   },
   {
     icon: <IoLockClosedOutline />,
-    title: 'Clé API dédiée',
-    text: 'Une clé par intégration, scope owner:read, révocable immédiatement.',
+    title: L('Clé API dédiée', 'Dedicated API key'),
+    text: L(
+      'Une clé par intégration, scope owner:read, révocable immédiatement.',
+      'One key per integration, owner:read scope, immediately revocable.'
+    ),
   },
   {
     icon: <IoServerOutline />,
-    title: 'REST simple',
-    text: 'Enveloppe JSON unique, historique brut, aucune pagination cachée.',
+    title: L('REST simple', 'Simple REST'),
+    text: L(
+      'Enveloppe JSON unique, historique brut, aucune pagination cachée.',
+      'Single JSON envelope, raw history, no hidden pagination.'
+    ),
   },
   {
     icon: <IoSwapHorizontalOutline />,
-    title: 'Vos appareils uniquement',
-    text: 'La clé ne voit que les traceurs rattachés à votre compte. Aucune donnée interne.',
+    title: L('Vos appareils uniquement', 'Your devices only'),
+    text: L(
+      'La clé ne voit que les traceurs rattachés à votre compte. Aucune donnée interne.',
+      'The key only sees trackers linked to your account. No internal data.'
+    ),
   },
 ];
 
 export default function DeveloperSection() {
+  const { tr } = useLanguage();
   const [active, setActive] = useState<(typeof tabs)[number]['id']>('curl');
   const reduce = useReducedMotion();
 
@@ -96,30 +113,27 @@ export default function DeveloperSection() {
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div className="grid gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-16">
           <Reveal>
-            <SectionLabel>Pour les équipes techniques</SectionLabel>
+            <SectionLabel>{tr('Pour les équipes techniques', 'For technical teams')}</SectionLabel>
             <h2 className="mt-5 text-3xl font-bold tracking-[-0.04em] text-neutral-900 md:text-5xl">
-              Branchez Faucon
-              <span className="block text-primary-600">dans vos propres outils.</span>
+              {tr('Branchez Faucon', 'Plug Faucon')}
+              <span className="block text-primary-600">{tr('dans vos propres outils.', 'into your own tools.')}</span>
             </h2>
             <p className="mt-5 max-w-lg text-sm leading-relaxed text-neutral-600 md:text-base">
-              ERP, back-office logistique, application métier, tableau de bord assurance :
-              l’API propriétaire Faucon expose uniquement vos traceurs, leurs positions
-              brutes, leurs alertes et leur état. Lecture seule, clé dédiée, données
-              internes jamais exposées.
+              {tr('ERP, back-office logistique, application métier, tableau de bord assurance : l’API propriétaire Faucon expose uniquement vos traceurs, leurs positions brutes, leurs alertes et leur état. Lecture seule, clé dédiée, données internes jamais exposées.', 'ERP, logistics back office, business app, insurance dashboard: the Faucon owner API exposes only your trackers, their raw positions, alerts and status. Read-only, dedicated key, internal data never exposed.')}
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               {capabilities.map((item) => (
                 <div
-                  key={item.title}
+                  key={item.title.fr}
                   className="rounded-xl border border-neutral-100 bg-neutral-0/60 p-4"
                 >
                   <div className="flex items-center gap-2 text-primary-600">
                     {item.icon}
-                    <p className="text-xs font-bold text-neutral-900">{item.title}</p>
+                    <p className="text-xs font-bold text-neutral-900">{tr(item.title.fr, item.title.en)}</p>
                   </div>
                   <p className="mt-1.5 text-[11px] leading-relaxed text-neutral-600">
-                    {item.text}
+                    {tr(item.text.fr, item.text.en)}
                   </p>
                 </div>
               ))}
@@ -130,14 +144,14 @@ export default function DeveloperSection() {
                 href="/developpeurs"
                 className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-accent-400 px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(0,87,255,0.24)] transition-transform hover:-translate-y-0.5"
               >
-                Lire la documentation API
+                {tr('Lire la documentation API', 'Read the API documentation')}
                 <IoArrowForwardOutline className="transition-transform group-hover:translate-x-1" />
               </Link>
               <a
                 href="#contact"
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200 px-6 py-3.5 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50"
               >
-                Parler à un intégrateur
+                {tr('Parler à un intégrateur', 'Talk to an integrator')}
               </a>
             </div>
           </Reveal>

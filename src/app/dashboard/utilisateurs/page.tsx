@@ -9,7 +9,7 @@ import {
 import { adminService } from '@/services/admin.service';
 import { useAuthStore } from '@/store/auth.store';
 import { UtilisateurResume, UtilisateurDetail, Role } from '@/types';
-import { createUserSchema } from '@/lib/validations';
+import { getCreateUserSchema } from '@/lib/validations';
 import { formatDate } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/errors';
 import Card from '@/components/ui/Card';
@@ -18,6 +18,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 const container = {
   hidden: {},
@@ -30,6 +31,7 @@ const item = {
 
 export default function UtilisateursPage() {
   const { user: currentUser } = useAuthStore();
+  const { tr, language } = useLanguage();
   const [utilisateurs, setUtilisateurs] = useState<UtilisateurResume[]>([]);
   const [detail, setDetail] = useState<UtilisateurDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,11 +50,11 @@ export default function UtilisateursPage() {
       setUtilisateurs(await adminService.getUtilisateurs());
     } catch (err) {
       console.error('[Utilisateurs]', err);
-      toast.error(getErrorMessage(err, 'Impossible de charger la liste des utilisateurs. Réessayez dans un instant.'));
+      toast.error(getErrorMessage(err, tr('Impossible de charger la liste des utilisateurs. Réessayez dans un instant.', 'Unable to load the user list. Try again in a moment.')));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tr]);
 
   useEffect(() => {
     const initial = async () => {
@@ -66,10 +68,10 @@ export default function UtilisateursPage() {
     try {
       await adminService.setRole(u.id, role);
       setUtilisateurs((prev) => prev.map((x) => (x.id === u.id ? { ...x, role } : x)));
-      toast.success('Rôle mis à jour');
+      toast.success(tr('Rôle mis à jour', 'Role updated'));
     } catch (err) {
       console.error('[setRole]', err);
-      toast.error(getErrorMessage(err, 'Impossible de changer le rôle de cet utilisateur. Réessayez dans un instant.'));
+      toast.error(getErrorMessage(err, tr('Impossible de changer le rôle de cet utilisateur. Réessayez dans un instant.', 'Unable to change this user’s role. Try again in a moment.')));
     } finally {
       setRoleSaving(null);
     }
@@ -82,10 +84,10 @@ export default function UtilisateursPage() {
       await adminService.supprimerUtilisateur(toDelete.id);
       setUtilisateurs((prev) => prev.filter((x) => x.id !== toDelete.id));
       setToDelete(null);
-      toast.success('Utilisateur supprimé');
+      toast.success(tr('Utilisateur supprimé', 'User deleted'));
     } catch (err) {
       console.error('[supprimerUtilisateur]', err);
-      toast.error(getErrorMessage(err, 'Impossible de supprimer cet utilisateur. Réessayez dans un instant.'));
+      toast.error(getErrorMessage(err, tr('Impossible de supprimer cet utilisateur. Réessayez dans un instant.', 'Unable to delete this user. Try again in a moment.')));
     } finally {
       setDeleting(false);
     }
@@ -96,7 +98,7 @@ export default function UtilisateursPage() {
       setDetail(await adminService.getUtilisateurById(id));
     } catch (err) {
       console.error('[detail]', err);
-      toast.error(getErrorMessage(err, 'Impossible de charger le détail de cet utilisateur. Réessayez dans un instant.'));
+      toast.error(getErrorMessage(err, tr('Impossible de charger le détail de cet utilisateur. Réessayez dans un instant.', 'Unable to load this user’s details. Try again in a moment.')));
     }
   };
 
@@ -122,14 +124,14 @@ export default function UtilisateursPage() {
     <motion.div variants={container} initial="hidden" animate="show" className="p-8 flex flex-col gap-6">
       <motion.div variants={item} className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">Utilisateurs</h1>
+          <h1 className="text-2xl font-semibold text-neutral-900">{tr('Utilisateurs', 'Users')}</h1>
           <p className="text-sm text-neutral-600 mt-1">
-            {utilisateurs.length} compte(s) enregistré(s) sur la plateforme
+            {utilisateurs.length} {tr('compte(s) enregistré(s) sur la plateforme', 'account(s) registered on the platform')}
           </p>
         </div>
         <Button variant="primary" onClick={() => setCreating(true)}>
           <IoAddOutline size={18} />
-          Créer un utilisateur
+          {tr('Créer un utilisateur', 'Create a user')}
         </Button>
       </motion.div>
 
@@ -141,7 +143,7 @@ export default function UtilisateursPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher par nom, email, téléphone…"
+                placeholder={tr('Rechercher par nom, email, téléphone…', 'Search by name, email, phone…')}
                 className="w-full pl-10 pr-4 py-2 bg-neutral-50 border border-neutral-100 rounded-[10px] text-sm focus:outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/10"
               />
             </div>
@@ -149,19 +151,19 @@ export default function UtilisateursPage() {
 
           {filtered.length === 0 ? (
             <div className="p-10 text-center text-neutral-500 text-sm">
-              Aucun utilisateur ne correspond à votre recherche.
+              {tr('Aucun utilisateur ne correspond à votre recherche.', 'No user matches your search.')}
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wide text-neutral-500 border-b border-neutral-100">
-                    <th className="px-6 py-3 font-semibold">Utilisateur</th>
-                    <th className="px-6 py-3 font-semibold">Téléphone</th>
-                    <th className="px-6 py-3 font-semibold">Rôle</th>
-                    <th className="px-6 py-3 font-semibold text-center">Traceurs</th>
-                    <th className="px-6 py-3 font-semibold">Inscription</th>
-                    <th className="px-6 py-3 font-semibold text-right">Actions</th>
+                    <th className="px-6 py-3 font-semibold">{tr('Utilisateur', 'User')}</th>
+                    <th className="px-6 py-3 font-semibold">{tr('Téléphone', 'Phone')}</th>
+                    <th className="px-6 py-3 font-semibold">{tr('Rôle', 'Role')}</th>
+                    <th className="px-6 py-3 font-semibold text-center">{tr('Traceurs', 'Trackers')}</th>
+                    <th className="px-6 py-3 font-semibold">{tr('Inscription', 'Joined')}</th>
+                    <th className="px-6 py-3 font-semibold text-right">{tr('Actions', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -174,13 +176,13 @@ export default function UtilisateursPage() {
                       <td className="px-6 py-3.5 text-neutral-600">{u.telephone ?? '—'}</td>
                       <td className="px-6 py-3.5">
                         {roleSaving === u.id ? (
-                          <span className="text-xs text-neutral-500">Enregistrement…</span>
+                          <span className="text-xs text-neutral-500">{tr('Enregistrement…', 'Saving…')}</span>
                         ) : u.id === currentUser?.id ? (
                           <span
                             className="rounded-full text-xs font-semibold px-3 py-1 bg-primary-50 text-primary-600 border border-primary-200 cursor-not-allowed"
-                            title="Vous ne pouvez pas changer votre propre rôle"
+                            title={tr('Vous ne pouvez pas changer votre propre rôle', 'You cannot change your own role')}
                           >
-                            Admin (vous)
+                            {tr('Admin (vous)', 'Admin (you)')}
                           </span>
                         ) : (
                           <select
@@ -193,8 +195,8 @@ export default function UtilisateursPage() {
                                 : 'bg-neutral-50 text-neutral-700 border-neutral-200'}
                             `}
                           >
-                            <option value="UTILISATEUR">Utilisateur</option>
-                            <option value="ADMIN">Admin</option>
+                            <option value="UTILISATEUR">{tr('Utilisateur', 'User')}</option>
+                            <option value="ADMIN">{tr('Admin', 'Admin')}</option>
                           </select>
                         )}
                       </td>
@@ -207,7 +209,7 @@ export default function UtilisateursPage() {
                           <button
                             onClick={() => openDetail(u.id)}
                             className="p-2 rounded-lg text-neutral-500 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                            title="Voir le détail"
+                            title={tr('Voir le détail', 'View details')}
                           >
                             <IoEyeOutline size={17} />
                           </button>
@@ -215,7 +217,7 @@ export default function UtilisateursPage() {
                             onClick={() => u.role !== 'ADMIN' && setToDelete(u)}
                             disabled={u.role === 'ADMIN'}
                             className="p-2 rounded-lg text-neutral-500 hover:text-danger-strong hover:bg-danger-tint disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-neutral-500 disabled:cursor-not-allowed transition-colors"
-                            title={u.role === 'ADMIN' ? 'Un compte administrateur ne peut pas être supprimé' : 'Supprimer'}
+                            title={u.role === 'ADMIN' ? tr('Un compte administrateur ne peut pas être supprimé', 'An admin account cannot be deleted') : tr('Supprimer', 'Delete')}
                           >
                             <IoTrashOutline size={17} />
                           </button>
@@ -230,20 +232,20 @@ export default function UtilisateursPage() {
         </Card>
       </motion.div>
 
-      {/* ── Créer un utilisateur ── */}
-      <Modal open={creating} onClose={() => setCreating(false)} title="Créer un utilisateur" subtitle="Le compte pourra se connecter à l'app mobile">
+      {/* ── {tr('Créer un utilisateur', 'Create a user')} ── */}
+      <Modal open={creating} onClose={() => setCreating(false)} title={tr('Créer un utilisateur', 'Create a user')} subtitle={tr('Le compte pourra se connecter à l’app mobile', 'The account will be able to sign in to the mobile app')}>
         <Formik
           initialValues={{ userName: '', email: '', password: '', role: 'UTILISATEUR' as Role }}
-          validationSchema={createUserSchema}
+          validationSchema={getCreateUserSchema(language)}
           onSubmit={async (values, { setSubmitting, resetForm }) => {
             try {
               await adminService.creerUtilisateur(values.userName, values.email, values.password, values.role);
-              toast.success('Utilisateur créé');
+              toast.success(tr('Utilisateur créé', 'User created'));
               resetForm();
               setCreating(false);
               load();
             } catch (err: unknown) {
-              toast.error(getErrorMessage(err, 'Impossible de créer cet utilisateur. Vérifiez les informations saisies, puis réessayez.'));
+              toast.error(getErrorMessage(err, tr('Impossible de créer cet utilisateur. Vérifiez les informations saisies, puis réessayez.', 'Unable to create this user. Check the information and try again.')));
             } finally {
               setSubmitting(false);
             }
@@ -252,17 +254,17 @@ export default function UtilisateursPage() {
           {({ values, errors, touched, handleChange, handleBlur, isSubmitting }) => (
             <Form className="flex flex-col gap-4">
               <Input
-                label="Nom d'utilisateur"
+                label={tr('Nom d’utilisateur', 'Username')}
                 name="userName"
                 value={values.userName}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 error={touched.userName ? errors.userName : undefined}
-                placeholder="Ex : Jean Kouamé"
+                placeholder={tr('Ex : Jean Kouamé', 'E.g. John Doe')}
                 required
               />
               <Input
-                label="Adresse email"
+                label={tr('Adresse email', 'Email address')}
                 name="email"
                 type="email"
                 value={values.email}
@@ -273,28 +275,28 @@ export default function UtilisateursPage() {
                 required
               />
               <Input
-                label="Mot de passe"
+                label={tr('Mot de passe', 'Password')}
                 name="password"
                 type="password"
                 value={values.password}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 error={touched.password ? errors.password : undefined}
-                placeholder="8 caractères minimum"
+                placeholder={tr('8 caractères minimum', 'At least 8 characters')}
                 required
               />
               <Select
-                label="Rôle"
+                label={tr('Rôle', 'Role')}
                 name="role"
                 value={values.role}
                 onChange={handleChange}
                 onBlur={handleBlur}
               >
-                <option value="UTILISATEUR">Utilisateur</option>
-                <option value="ADMIN">Administrateur</option>
+                <option value="UTILISATEUR">{tr('Utilisateur', 'User')}</option>
+                <option value="ADMIN">{tr('Administrateur', 'Administrator')}</option>
               </Select>
               <Button type="submit" loading={isSubmitting} fullWidth className="mt-1">
-                Créer le compte
+                {tr('Créer le compte', 'Create account')}
               </Button>
             </Form>
           )}
@@ -313,10 +315,10 @@ export default function UtilisateursPage() {
           <div className="flex flex-col gap-5">
             <div className="flex items-center gap-3">
               <Badge color={detail.role === 'ADMIN' ? 'primary' : 'neutral'}>
-                {detail.role === 'ADMIN' ? 'Administrateur' : 'Utilisateur'}
+                {detail.role === 'ADMIN' ? tr('Administrateur', 'Administrator') : tr('Utilisateur', 'User')}
               </Badge>
               <span className="text-xs text-neutral-600">
-                Inscrit le {formatDate(detail.dateCreation)}
+                {tr('Inscrit le', 'Joined on')} {formatDate(detail.dateCreation)}
                 {detail.derniereConnexion ? ` · dernière connexion ${formatDate(detail.derniereConnexion)}` : ''}
               </span>
             </div>
@@ -324,11 +326,11 @@ export default function UtilisateursPage() {
             <div>
               <h3 className="text-sm font-semibold text-neutral-900 mb-2 flex items-center gap-2">
                 <IoPeopleOutline size={16} className="text-primary-600" />
-                Traceurs rattachés ({detail.vehicules.length})
+                {tr('Traceurs rattachés', 'Linked trackers')} ({detail.vehicules.length})
               </h3>
               {detail.vehicules.length === 0 ? (
                 <p className="text-sm text-neutral-500 bg-neutral-50 rounded-[10px] p-4">
-                  Aucun traceur rattaché à ce compte.
+                  {tr('Aucun traceur rattaché à ce compte.', 'No tracker linked to this account.')}
                 </p>
               ) : (
                 <div className="flex flex-col gap-2">
@@ -337,7 +339,7 @@ export default function UtilisateursPage() {
                       <div>
                         <p className="text-sm font-semibold text-neutral-900">{v.nom}</p>
                         <p className="text-xs text-neutral-500 font-mono">
-                          {v.trackerId ?? v.imei ?? 'Sans identifiant'}
+                          {v.trackerId ?? v.imei ?? tr('Sans identifiant', 'No identifier')}
                         </p>
                       </div>
                       <Badge color="neutral">{v.id.slice(0, 8)}</Badge>
@@ -354,19 +356,19 @@ export default function UtilisateursPage() {
       <Modal
         open={!!roleChange}
         onClose={() => setRoleChange(null)}
-        title="Changer le rôle de cet utilisateur ?"
+        title={tr('Changer le rôle de cet utilisateur ?', 'Change this user’s role?')}
         subtitle={roleChange?.user.userName}
       >
         <div className="flex flex-col gap-4">
           <p className="text-sm text-neutral-600">
-            {roleChange?.user.userName} passera du rôle{' '}
-            <strong>{roleChange?.user.role === 'ADMIN' ? 'Administrateur' : 'Utilisateur'}</strong> à{' '}
-            <strong>{roleChange?.role === 'ADMIN' ? 'Administrateur' : 'Utilisateur'}</strong>.
-            {roleChange?.role === 'ADMIN' && ' Il aura alors accès à ce tableau de bord et à toutes les données de la plateforme.'}
+            {roleChange?.user.userName} {tr('passera du rôle', 'will change from')}{' '}
+            <strong>{roleChange?.user.role === 'ADMIN' ? tr('Administrateur', 'Administrator') : tr('Utilisateur', 'User')}</strong> {tr('à', 'to')}{' '}
+            <strong>{roleChange?.role === 'ADMIN' ? tr('Administrateur', 'Administrator') : tr('Utilisateur', 'User')}</strong>.
+            {roleChange?.role === 'ADMIN' && tr(' Il aura alors accès à ce tableau de bord et à toutes les données de la plateforme.', ' They will then have access to this dashboard and all platform data.')}
           </p>
           <div className="flex gap-3">
             <Button variant="ghost" fullWidth onClick={() => setRoleChange(null)}>
-              Annuler
+              {tr('Annuler', 'Cancel')}
             </Button>
             <Button
               variant="primary"
@@ -379,7 +381,7 @@ export default function UtilisateursPage() {
                 await handleRoleChange(user, role);
               }}
             >
-              Confirmer
+              {tr('Confirmer', 'Confirm')}
             </Button>
           </div>
         </div>
@@ -389,19 +391,19 @@ export default function UtilisateursPage() {
       <Modal
         open={!!toDelete}
         onClose={() => setToDelete(null)}
-        title="Supprimer cet utilisateur ?"
+        title={tr('Supprimer cet utilisateur ?', 'Delete this user?')}
         subtitle={toDelete?.userName}
       >
         <div className="flex flex-col gap-4">
           <p className="text-sm text-neutral-600">
-            Cette action est irréversible : le compte et tous ses traceurs rattachés seront supprimés.
+            {tr('Cette action est irréversible : le compte et tous ses traceurs rattachés seront supprimés.', 'This action cannot be undone: the account and all linked trackers will be deleted.')}
           </p>
           <div className="flex gap-3">
             <Button variant="ghost" fullWidth onClick={() => setToDelete(null)}>
-              Annuler
+              {tr('Annuler', 'Cancel')}
             </Button>
             <Button variant="danger" fullWidth loading={deleting} onClick={handleDelete}>
-              Supprimer
+              {tr('Supprimer', 'Delete')}
             </Button>
           </div>
         </div>

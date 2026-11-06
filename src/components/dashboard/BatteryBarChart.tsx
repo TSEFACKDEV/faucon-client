@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/i18n/LanguageProvider';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer } from 'recharts';
 
 interface Props {
@@ -17,6 +18,7 @@ const COULEUR_PAR_TRANCHE: Record<string, string> = {
 };
 
 export default function BatteryBarChart({ data }: Props) {
+  const { tr } = useLanguage();
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} margin={{ top: 8, right: 12, left: -20, bottom: 0 }} barCategoryGap={16}>
@@ -24,8 +26,8 @@ export default function BatteryBarChart({ data }: Props) {
         <XAxis dataKey="tranche" tick={{ fill: '#74839C', fontSize: 11 }} axisLine={{ stroke: '#C9D3E3' }} tickLine={false} />
         <YAxis allowDecimals={false} tick={{ fill: '#74839C', fontSize: 11 }} axisLine={false} tickLine={false} width={28} />
         <Tooltip
-          formatter={(value) => [value, 'Traceurs']}
-          labelFormatter={(l) => `Batterie ${l}%`}
+          formatter={(value) => [value, tr('Traceurs', 'Trackers')]}
+          labelFormatter={(l) => `${tr('Batterie', 'Battery')} ${l}%`}
           contentStyle={{ borderRadius: 10, border: '1px solid #E1E8F2', fontSize: 12.5 }}
           cursor={{ fill: '#EDF2FA' }}
         />

@@ -28,7 +28,7 @@ interface Props {
 }
 
 export default function Sidebar({ open = false, onClose }: Props) {
-  const { t } = useLanguage();
+  const { t, tr } = useLanguage();
   const pathname = usePathname();
   const { user } = useAuthStore();
   const { handleLogout } = useLogout();
@@ -51,7 +51,7 @@ export default function Sidebar({ open = false, onClose }: Props) {
         <button
           onClick={onClose}
           className="lg:hidden text-white/70 hover:text-white transition-colors p-1"
-          aria-label="Fermer le menu"
+          aria-label={tr('Fermer le menu', 'Close menu')}
         >
           <IoCloseOutline size={22} />
         </button>

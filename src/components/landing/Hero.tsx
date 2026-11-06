@@ -110,6 +110,7 @@ export default function Hero() {
 }
 
 function HeroMockup({ reduce }: { reduce: boolean }) {
+  const { tr } = useLanguage();
   return (
     <motion.div
       initial={reduce ? false : { opacity: 0, y: 30, scale: 0.97 }}
@@ -125,12 +126,12 @@ function HeroMockup({ reduce }: { reduce: boolean }) {
             <div className="flex items-center gap-2.5">
               <span className="h-2 w-2 rounded-full bg-accent-400" />
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-100/70">
-                Faucon · Carte live
+                {tr('Faucon · Carte live', 'Faucon · Live map')}
               </span>
             </div>
             <div className="flex items-center gap-1.5 rounded-full border border-success/30 bg-success/15 px-2.5 py-1 text-[10px] font-semibold text-green-200">
               <span className="h-1.5 w-1.5 animate-ping rounded-full bg-success" />
-              Temps réel actif
+              {tr('Temps réel actif', 'Live now')}
             </div>
           </div>
 
@@ -168,9 +169,9 @@ function HeroMockup({ reduce }: { reduce: boolean }) {
             </svg>
 
             {/* Pins */}
-            <Pin x="24%" y="70%" label="Camion Nord" tone="primary" />
-            <Pin x="46%" y="58%" label="Livraison" tone="success" />
-            <Pin x="80%" y="47%" label="Camion Est" tone="warning" />
+            <Pin x="24%" y="70%" label={tr('Camion Nord', 'North truck')} tone="primary" />
+            <Pin x="46%" y="58%" label={tr('Livraison', 'Delivery')} tone="success" />
+            <Pin x="80%" y="47%" label={tr('Camion Est', 'East truck')} tone="warning" />
 
             {/* Camion animé */}
             <motion.div
@@ -198,8 +199,8 @@ function HeroMockup({ reduce }: { reduce: boolean }) {
                   <TruckIcon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-[11px] font-bold text-neutral-900">Camion Nord</p>
-                  <p className="text-[9px] font-medium text-neutral-500">Il y a 4 s · En ligne</p>
+                  <p className="truncate text-[11px] font-bold text-neutral-900">{tr('Camion Nord', 'North truck')}</p>
+                  <p className="text-[9px] font-medium text-neutral-500">{tr('Il y a 4 s · En ligne', '4 s ago · Online')}</p>
                 </div>
               </div>
               <div className="mt-2.5 grid grid-cols-2 gap-1.5">
@@ -219,9 +220,9 @@ function HeroMockup({ reduce }: { reduce: boolean }) {
                   <IoAlertCircleOutline size={17} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-neutral-900">Vitesse excessive</p>
+                  <p className="text-[10px] font-bold text-neutral-900">{tr('Vitesse excessive', 'Speeding')}</p>
                   <p className="mt-0.5 text-[9px] leading-relaxed text-neutral-500">
-                    86 km/h · seuil 80 · vérifier la position
+                    {tr('86 km/h · seuil 80 · vérifier la position', '86 km/h · limit 80 · check position')}
                   </p>
                 </div>
               </div>
@@ -231,10 +232,10 @@ function HeroMockup({ reduce }: { reduce: boolean }) {
           {/* Pied de fenêtre */}
           <div className="flex items-center justify-between border-t border-white/10 px-4 py-2.5 text-[9px] font-medium text-primary-100/55">
             <span className="inline-flex items-center gap-1.5">
-              <IoLocationOutline /> Yaoundé, Cameroun
+              <IoLocationOutline /> {tr('Yaoundé, Cameroun', 'Yaoundé, Cameroon')}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <IoPulseOutline className="text-accent-300" /> Aperçu de l’interface
+              <IoPulseOutline className="text-accent-300" /> {tr('Aperçu de l’interface', 'Interface preview')}
             </span>
           </div>
         </div>
@@ -250,8 +251,8 @@ function HeroMockup({ reduce }: { reduce: boolean }) {
           <IoNavigateOutline size={17} />
         </div>
         <div>
-          <p className="text-[10px] font-bold text-white">Suivi sans rupture</p>
-          <p className="text-[9px] text-primary-100/60">WebSocket + relance automatique</p>
+          <p className="text-[10px] font-bold text-white">{tr('Suivi sans rupture', 'Seamless tracking')}</p>
+          <p className="text-[9px] text-primary-100/60">{tr('WebSocket + relance automatique', 'WebSocket + automatic retry')}</p>
         </div>
       </motion.div>
     </motion.div>

@@ -15,7 +15,7 @@ import { adminService } from '@/services/admin.service';
 import { onVehicleMode, onDiagnostic } from '@/lib/realtime';
 import { VehiculeDetail, DeviceMode, CodeCommande, StatutCommande, Position, DiagnosticTraceur } from '@/types';
 import {
-  MODE_LABELS, ALARM_LABELS, formatDateTime, timeAgo, getBatteryColor, formatCoords, isOnline,
+  getModeLabel, getAlarmLabel, formatDateTime, timeAgo, getBatteryColor, formatCoords, isOnline,
 } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/errors';
 import { useRealtime } from '@/hooks/useRealtime';
@@ -27,14 +27,15 @@ import Button from '@/components/ui/Button';
 import InfoCell from '@/components/ui/InfoCell';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false });
 
-const STATUT_STYLE: Record<StatutCommande, { color: 'success' | 'warning' | 'danger' | 'neutral'; label: string }> = {
-  SUCCESS: { color: 'success', label: 'Exécutée' },
-  FAILED:  { color: 'danger', label: 'Échec' },
-  TIMEOUT: { color: 'warning', label: 'Expirée' },
-  PENDING: { color: 'neutral', label: 'En attente' },
+const STATUT_STYLE: Record<StatutCommande, { color: 'success' | 'warning' | 'danger' | 'neutral'; label: string; labelEn: string }> = {
+  SUCCESS: { color: 'success', label: 'Exécutée', labelEn: 'Completed' },
+  FAILED:  { color: 'danger', label: 'Échec', labelEn: 'Failed' },
+  TIMEOUT: { color: 'warning', label: 'Expirée', labelEn: 'Timed out' },
+  PENDING: { color: 'neutral', label: 'En attente', labelEn: 'Pending' },
 };
 
 const item = {
@@ -44,6 +45,7 @@ const item = {
 
 export default function TraceurDetailPage() {
   const params = useParams<{ id: string }>();
+  const { tr } = useLanguage();
   const id = params.id;
 
   const [vehicule, setVehicule] = useState<VehiculeDetail | null>(null);
@@ -155,11 +157,11 @@ export default function TraceurDetailPage() {
       }
     } catch (err) {
       console.error('[TraceurDetail]', err);
-      toast.error(getErrorMessage(err, 'Impossible de charger ce traceur. Réessayez dans un instant.'));
+      toast.error(getErrorMessage(err, tr('Impossible de charger ce traceur. Réessayez dans un instant.', 'Unable to load this tracker. Try again in a moment.')));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, tr]);
 
   useEffect(() => {
     const initial = async () => {
@@ -202,13 +204,13 @@ export default function TraceurDetailPage() {
       await adminService.readMode(id);
       setTimeout(() => {
         setCheckingMode((still) => {
-          if (still) toast.error("Aucune réponse du traceur — il est peut-être hors ligne.");
+          if (still) toast.error(tr('Aucune réponse du traceur — il est peut-être hors ligne.', 'No response from the tracker — it may be offline.'));
           return false;
         });
       }, 20000);
     } catch (err) {
       setCheckingMode(false);
-      toast.error(getErrorMessage(err, 'Impossible de demander le mode au traceur. Réessayez dans un instant.'));
+      toast.error(getErrorMessage(err, tr('Impossible de demander le mode au traceur. Réessayez dans un instant.', 'Unable to request the mode from the tracker. Try again in a moment.')));
     }
   };
 
@@ -282,11 +284,11 @@ export default function TraceurDetailPage() {
     setSending(codeCommande);
     try {
       await adminService.envoyerCommande(vehicule.id, codeCommande, valeur);
-      toast.success('Commande envoyée au traceur');
+      toast.success(tr('Commande envoyée au traceur', 'Command sent to the tracker'));
       load();
     } catch (err) {
       console.error('[commande]', err);
-      toast.error(getErrorMessage(err, 'Impossible d\'envoyer la commande au traceur. Vérifiez qu\'il est en ligne, puis réessayez.'));
+      toast.error(getErrorMessage(err, tr('Impossible d’envoyer la commande au traceur. Vérifiez qu’il est en ligne, puis réessayez.', 'Unable to send the command to the tracker. Check that it is online, then try again.')));
     } finally {
       setSending(null);
     }
@@ -294,7 +296,7 @@ export default function TraceurDetailPage() {
 
   const refresh = async () => {
     await load();
-    toast.success('Traceur actualisé');
+    toast.success(tr('Traceur actualisé', 'Tracker refreshed'));
   };
 
   if (loading) {
@@ -308,7 +310,7 @@ export default function TraceurDetailPage() {
   if (!vehicule || !vehiculeLive) {
     return (
       <div className="p-8">
-        <p className="text-neutral-600">Traceur introuvable.</p>
+        <p className="text-neutral-600">{tr('Traceur introuvable.', 'Tracker not found.')}</p>
       </div>
     );
   }
@@ -328,7 +330,7 @@ export default function TraceurDetailPage() {
           <Link
             href="/dashboard/traceurs"
             className="p-2 rounded-lg text-neutral-500 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-            title="Retour à la liste"
+            title={tr('Retour à la liste', 'Back to list')}
           >
             <IoArrowBackOutline size={20} />
           </Link>
@@ -336,20 +338,20 @@ export default function TraceurDetailPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-semibold text-neutral-900">{vehiculeLive.nom}</h1>
               <Badge color={isOnline(vehiculeLive.derniereCommunication, vehiculeLive.niveauSignal, vehiculeLive.niveauBatterie) ? 'success' : 'neutral'} dot>
-                {isOnline(vehiculeLive.derniereCommunication, vehiculeLive.niveauSignal, vehiculeLive.niveauBatterie) ? 'En ligne' : 'Hors ligne'}
+                {isOnline(vehiculeLive.derniereCommunication, vehiculeLive.niveauSignal, vehiculeLive.niveauBatterie) ? tr('En ligne', 'Online') : tr('Hors ligne', 'Offline')}
               </Badge>
               <Badge color={vehiculeLive.estActif ? 'primary' : 'warning'}>
-                {vehiculeLive.estActif ? 'Actif' : 'Désactivé'}
+                {vehiculeLive.estActif ? tr('Actif', 'Active') : tr('Désactivé', 'Disabled')}
               </Badge>
             </div>
             <p className="text-sm text-neutral-600 mt-1 font-mono">
-              {vehiculeLive.trackerId ?? vehiculeLive.imei ?? 'Sans identifiant'}
+              {vehiculeLive.trackerId ?? vehiculeLive.imei ?? tr('Sans identifiant', 'No identifier')}
             </p>
           </div>
         </div>
         <Button variant="secondary" onClick={refresh}>
           <IoPulseOutline size={16} />
-          Actualiser
+          {tr('Actualiser', 'Refresh')}
         </Button>
       </motion.div>
 
@@ -360,9 +362,9 @@ export default function TraceurDetailPage() {
             <Card padding={false} className="overflow-hidden">
               <div className="px-6 pt-5 pb-3 flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-semibold text-neutral-900">Position en temps réel</h2>
+                  <h2 className="text-base font-semibold text-neutral-900">{tr('Position en temps réel', 'Real-time position')}</h2>
                   <p className="text-xs text-neutral-600 mt-0.5">
-                    {vehiculeLive.positions.length} point(s) reçus
+                    {vehiculeLive.positions.length} {tr('point(s) reçus', 'point(s) received')}
                     {dernierPoint ? ` · ${formatDateTime(dernierPoint.horodatage)}` : ''}
                   </p>
                 </div>
@@ -371,10 +373,10 @@ export default function TraceurDetailPage() {
                     variant={follow ? 'primary' : 'secondary'}
                     size="sm"
                     onClick={() => setFollow((f) => !f)}
-                    title={follow ? 'Désactiver le suivi automatique' : 'Suivre le traceur sur la carte'}
+                    title={follow ? tr('Désactiver le suivi automatique', 'Disable automatic tracking') : tr('Suivre le traceur sur la carte', 'Track the tracker on the map')}
                   >
                     <IoNavigateOutline size={14} className={follow ? '' : 'mr-1'} />
-                    {follow ? 'Suivi activé' : 'Suivre'}
+                    {follow ? tr('Suivi activé', 'Tracking on') : tr('Suivre', 'Track')}
                   </Button>
                   {dernierPoint && (
                     <Badge color="primary">
@@ -394,7 +396,7 @@ export default function TraceurDetailPage() {
                   />
                 ) : (
                   <div className="h-full flex items-center justify-center text-sm text-neutral-500">
-                    Aucune position reçue pour le moment
+                    {tr('Aucune position reçue pour le moment', 'No position received yet')}
                   </div>
                 )}
               </div>
@@ -403,9 +405,9 @@ export default function TraceurDetailPage() {
 
           <motion.div variants={item}>
             <Card>
-              <h2 className="text-base font-semibold text-neutral-900 mb-1">Commandes rapides</h2>
+              <h2 className="text-base font-semibold text-neutral-900 mb-1">{tr('Commandes rapides', 'Quick commands')}</h2>
               <p className="text-xs text-neutral-600 mb-4">
-                Envoyées au traceur via MQTT — action différée au prochain cycle
+                {tr('Envoyées au traceur via MQTT — action différée au prochain cycle', 'Sent to the tracker via MQTT — action deferred to the next cycle')}
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Button
@@ -415,7 +417,7 @@ export default function TraceurDetailPage() {
                   onClick={() => send('LOCALISER')}
                 >
                   <IoLocationOutline size={16} />
-                  Localiser
+                  {tr('Localiser', 'Locate')}
                 </Button>
                 <Button
                   variant="secondary"
@@ -424,7 +426,7 @@ export default function TraceurDetailPage() {
                   onClick={() => send('REDEMARRER')}
                 >
                   <IoRadioOutline size={16} />
-                  Redémarrer
+                  {tr('Redémarrer', 'Restart')}
                 </Button>
                 <Button
                   variant="secondary"
@@ -433,7 +435,7 @@ export default function TraceurDetailPage() {
                   onClick={() => send('RESET_USINE')}
                 >
                   <IoHardwareChipOutline size={16} />
-                  Reset usine
+                  {tr('Reset usine', 'Factory reset')}
                 </Button>
                 <Button
                   variant="secondary"
@@ -442,7 +444,7 @@ export default function TraceurDetailPage() {
                   onClick={() => send('MODE', 'WORK')}
                 >
                   <IoPulseOutline size={16} />
-                  Repasser en WORK
+                  {tr('Repasser en WORK', 'Switch back to WORK')}
                 </Button>
               </div>
             </Card>
@@ -451,22 +453,22 @@ export default function TraceurDetailPage() {
           <motion.div variants={item}>
             <Card padding={false}>
               <div className="px-6 pt-5 pb-3">
-                <h2 className="text-base font-semibold text-neutral-900">Historique des commandes</h2>
+                <h2 className="text-base font-semibold text-neutral-900">{tr('Historique des commandes', 'Command history')}</h2>
                 <p className="text-xs text-neutral-600 mt-0.5">
-                  {vehiculeLive.commandes.length} commande(s) sur ce traceur
+                  {vehiculeLive.commandes.length} {tr('commande(s) sur ce traceur', 'command(s) on this tracker')}
                 </p>
               </div>
               {vehiculeLive.commandes.length === 0 ? (
-                <div className="px-6 pb-6 text-sm text-neutral-500">Aucune commande envoyée.</div>
+                <div className="px-6 pb-6 text-sm text-neutral-500">{tr('Aucune commande envoyée.', 'No command sent.')}</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left text-xs uppercase tracking-wide text-neutral-500 border-b border-neutral-100">
-                        <th className="px-6 py-3 font-semibold">Code</th>
-                        <th className="px-6 py-3 font-semibold">Paramètres</th>
-                        <th className="px-6 py-3 font-semibold">Statut</th>
-                        <th className="px-6 py-3 font-semibold">Envoyée le</th>
+                        <th className="px-6 py-3 font-semibold">{tr('Code', 'Code')}</th>
+                        <th className="px-6 py-3 font-semibold">{tr('Paramètres', 'Parameters')}</th>
+                        <th className="px-6 py-3 font-semibold">{tr('Statut', 'Status')}</th>
+                        <th className="px-6 py-3 font-semibold">{tr('Envoyée le', 'Sent on')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -479,7 +481,7 @@ export default function TraceurDetailPage() {
                               {c.parametres?.valeur ?? c.parametres?.detail ?? '—'}
                             </td>
                             <td className="px-6 py-3">
-                              <Badge color={s.color} dot>{s.label}</Badge>
+                              <Badge color={s.color} dot>{tr(s.label, s.labelEn)}</Badge>
                             </td>
                             <td className="px-6 py-3 text-neutral-600 text-xs">
                               {formatDateTime(c.dateEnvoi)}
@@ -499,11 +501,11 @@ export default function TraceurDetailPage() {
         <div className="flex flex-col gap-6">
           <motion.div variants={item}>
             <Card>
-              <h2 className="text-base font-semibold text-neutral-900 mb-4">Informations</h2>
+              <h2 className="text-base font-semibold text-neutral-900 mb-4">{tr('Informations', 'Information')}</h2>
               <div className="flex flex-col gap-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-neutral-600">
-                    <IoPersonOutline size={16} /> Propriétaire
+                    <IoPersonOutline size={16} /> {tr('Propriétaire', 'Owner')}
                   </span>
                   {vehiculeLive.utilisateur ? (
                     <div className="text-right">
@@ -511,7 +513,7 @@ export default function TraceurDetailPage() {
                       <p className="text-xs text-neutral-500">{vehiculeLive.utilisateur.email}</p>
                     </div>
                   ) : (
-                    <Badge color="warning">Non attribué</Badge>
+                    <Badge color="warning">{tr('Non attribué', 'Unassigned')}</Badge>
                   )}
                 </div>
                 <div className="flex items-center justify-between">
@@ -522,25 +524,25 @@ export default function TraceurDetailPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-neutral-600">
-                    <IoHardwareChipOutline size={16} /> Pin d&apos;activation
+                    <IoHardwareChipOutline size={16} /> {tr('Pin d’activation', 'Activation PIN')}
                   </span>
                   <span className="font-mono text-neutral-900">{vehiculeLive.pinActivation ?? '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-neutral-600">
-                    <IoCallOutline size={16} /> Tél. alerte
+                    <IoCallOutline size={16} /> {tr('Tél. alerte', 'Alert phone')}
                   </span>
                   <span className="font-mono text-neutral-900">{vehiculeLive.telephoneAlerte ?? '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-neutral-600">
-                    <IoPulseOutline size={16} /> Mode
+                    <IoPulseOutline size={16} /> {tr('Mode', 'Mode')}
                   </span>
-                  <Badge color="primary">{MODE_LABELS[vehiculeLive.modeActuel]}</Badge>
+                  <Badge color="primary">{getModeLabel(vehiculeLive.modeActuel)}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-neutral-600">
-                    <IoBatteryHalfOutline size={16} /> Batterie
+                    <IoBatteryHalfOutline size={16} /> {tr('Batterie', 'Battery')}
                   </span>
                   <span className="flex items-center gap-2">
                     <div className="w-14 h-1.5 rounded-full bg-neutral-100 overflow-hidden">
@@ -551,10 +553,10 @@ export default function TraceurDetailPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-neutral-600">
-                    <IoPulseOutline size={16} /> Dernière comm.
+                    <IoPulseOutline size={16} /> {tr('Dernière comm.', 'Last contact')}
                   </span>
                   <span className="text-neutral-900">
-                    {vehiculeLive.derniereCommunication ? timeAgo(vehiculeLive.derniereCommunication) : 'Jamais'}
+                    {vehiculeLive.derniereCommunication ? timeAgo(vehiculeLive.derniereCommunication) : tr('Jamais', 'Never')}
                   </span>
                 </div>
               </div>
@@ -563,41 +565,40 @@ export default function TraceurDetailPage() {
 
           <motion.div variants={item}>
             <Card>
-              <h2 className="text-base font-semibold text-neutral-900">État du traceur</h2>
+              <h2 className="text-base font-semibold text-neutral-900">{tr('État du traceur', 'Tracker status')}</h2>
               <p className="text-xs text-neutral-600 mb-4">
-                Diagnostic publié par le boîtier toutes les 5 minutes (firmware v12.1)
+                {tr('Diagnostic publié par le boîtier toutes les 5 minutes (firmware v12.1)', 'Diagnostic published by the device every 5 minutes (firmware v12.1)')}
               </p>
 
               {diagnostic ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  <InfoCell label="Modèle" value={diagnostic.modele ?? '—'} />
+                  <InfoCell label={tr('Modèle', 'Model')} value={diagnostic.modele ?? '—'} />
                   <InfoCell label="Firmware" value={diagnostic.version ?? '—'} />
-                  <InfoCell label="Mode appliqué" value={diagnostic.mode ?? '—'} />
-                  <InfoCell label="Dernier diagnostic" value={timeAgo(diagnostic.horodatage)} />
+                  <InfoCell label={tr('Mode appliqué', 'Applied mode')} value={diagnostic.mode ?? '—'} />
+                  <InfoCell label={tr('Dernier diagnostic', 'Last diagnostic')} value={timeAgo(diagnostic.horodatage)} />
                   <InfoCell
-                    label="Redémarrages"
-                    value={`${diagnostic.nbWatchdog} WDT · ${diagnostic.nbBrownout} brownout · ${diagnostic.nbPanique} panique`}
+                    label={tr('Redémarrages', 'Restarts')}
+                    value={`${diagnostic.nbWatchdog} WDT · ${diagnostic.nbBrownout} brownout · ${diagnostic.nbPanique} ${tr('panique', 'panic')}`}
                   />
-                  <InfoCell label="Dernière cause" value={diagnostic.causeReset ?? '—'} />
+                  <InfoCell label={tr('Dernière cause', 'Last cause')} value={diagnostic.causeReset ?? '—'} />
                   {diagnostic.dernierArret && diagnostic.dernierArret !== '?' && (
-                    <InfoCell label="Dernier arrêt" value={diagnostic.dernierArret} />
+                    <InfoCell label={tr('Dernier arrêt', 'Last stop')} value={diagnostic.dernierArret} />
                   )}
                   <InfoCell
-                    label="Mémoire libre"
-                    value={diagnostic.heapLibre ? `${Math.round(diagnostic.heapLibre / 1024)} Ko` : '—'}
+                    label={tr('Mémoire libre', 'Free memory')}
+                    value={diagnostic.heapLibre ? `${Math.round(diagnostic.heapLibre / 1024)} ${tr('Ko', 'KB')}` : '—'}
                   />
                   <InfoCell
-                    label="Journal flash"
-                    value={diagnostic.fileNombre ? `${diagnostic.fileNombre} en attente` : 'vide'}
+                    label={tr('Journal flash', 'Flash log')}
+                    value={diagnostic.fileNombre ? `${diagnostic.fileNombre} ${tr('en attente', 'pending')}` : tr('vide', 'empty')}
                   />
                   {diagnostic.i2cRecuperations > 0 && (
-                    <InfoCell label="Récupérations I2C" value={String(diagnostic.i2cRecuperations)} />
+                    <InfoCell label={tr('Récupérations I2C', 'I2C recoveries')} value={String(diagnostic.i2cRecuperations)} />
                   )}
                 </div>
               ) : (
                 <p className="text-sm text-neutral-500">
-                  Aucun diagnostic reçu — le traceur n&rsquo;a pas encore publié
-                  son état (firmware v12.1 requis).
+                  {tr('Aucun diagnostic reçu — le traceur n’a pas encore publié son état (firmware v12.1 requis).', 'No diagnostic received — the tracker has not published its status yet (firmware v12.1 required).')}
                 </p>
               )}
 
@@ -610,7 +611,7 @@ export default function TraceurDetailPage() {
                   onClick={readInfos}
                 >
                   <IoHardwareChipOutline size={16} />
-                  Interroger le traceur
+                  {tr('Interroger le traceur', 'Query the tracker')}
                 </Button>
                 {derniereInfo?.statutExecution === 'SUCCESS' && derniereInfo.parametres?.detail && (
                   <span className="text-xs font-semibold text-primary-700">
@@ -620,8 +621,8 @@ export default function TraceurDetailPage() {
                 {derniereInfo?.statutExecution === 'FAILED' && (
                   <span className="text-xs text-danger-600">
                     {derniereInfo.parametres?.detail === 'commande inconnue'
-                      ? 'Firmware antérieur à la v12.1 : commande INFO inconnue'
-                      : 'Commande refusée par le traceur'}
+                      ? tr('Firmware antérieur à la v12.1 : commande INFO inconnue', 'Firmware older than v12.1: INFO command unknown')
+                      : tr('Commande refusée par le traceur', 'Command refused by the tracker')}
                   </span>
                 )}
               </div>
@@ -630,18 +631,18 @@ export default function TraceurDetailPage() {
 
           <motion.div variants={item}>
             <Card>
-              <h2 className="text-base font-semibold text-neutral-900 mb-4">Configuration</h2>
+              <h2 className="text-base font-semibold text-neutral-900 mb-4">{tr('Configuration', 'Configuration')}</h2>
               <div className="flex flex-col gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-neutral-700 mb-1 block">Mode de transmission</label>
+                  <label className="text-xs font-semibold text-neutral-700 mb-1 block">{tr('Mode de transmission', 'Transmission mode')}</label>
                   <Select
                     name="mode"
                     value={mode}
                     onChange={(e) => setMode(e.target.value as DeviceMode)}
                   >
-                    <option value="WORK">Continu (WORK)</option>
-                    <option value="MOVE">Adaptatif (MOVE)</option>
-                    <option value="STANDBY">Veille (STANDBY)</option>
+                    <option value="WORK">{tr('Continu (WORK)', 'Continuous (WORK)')}</option>
+                    <option value="MOVE">{tr('Adaptatif (MOVE)', 'Adaptive (MOVE)')}</option>
+                    <option value="STANDBY">{tr('Veille (STANDBY)', 'Standby (STANDBY)')}</option>
                   </Select>
                   <Button
                     variant="secondary"
@@ -654,16 +655,16 @@ export default function TraceurDetailPage() {
                       setConfiguring('mode');
                       try {
                         await adminService.setMode(vehiculeLive.id, mode);
-                        toast.success('Mode enregistré');
+                        toast.success(tr('Mode enregistré', 'Mode saved'));
                         load();
                       } catch (err) {
-                        toast.error(getErrorMessage(err, 'Impossible de configurer le mode. Réessayez dans un instant.'));
+                        toast.error(getErrorMessage(err, tr('Impossible de configurer le mode. Réessayez dans un instant.', 'Unable to configure the mode. Try again in a moment.')));
                       } finally {
                         setConfiguring(null);
                       }
                     }}
                   >
-                    Enregistrer le mode
+                    {tr('Enregistrer le mode', 'Save mode')}
                   </Button>
                   <Button
                     variant="secondary"
@@ -675,16 +676,15 @@ export default function TraceurDetailPage() {
                     onClick={checkMode}
                   >
                     <IoRefreshOutline size={16} />
-                    Vérifier le mode sur le traceur
+                    {tr('Vérifier le mode sur le traceur', 'Check mode on the tracker')}
                   </Button>
                   <p className="text-[11px] text-neutral-500 mt-1.5">
-                    Interroge le boîtier et affiche le mode qu’il applique réellement
-                    (après un redémarrage, par exemple).
+                    {tr('Interroge le boîtier et affiche le mode qu’il applique réellement (après un redémarrage, par exemple).', 'Queries the device and shows the mode it actually applies (after a restart, for example).')}
                   </p>
                 </div>
 
                 <div className="border-t border-neutral-100 pt-4">
-                  <label className="text-xs font-semibold text-neutral-700 mb-1 block">Limite de vitesse (km/h)</label>
+                  <label className="text-xs font-semibold text-neutral-700 mb-1 block">{tr('Limite de vitesse (km/h)', 'Speed limit (km/h)')}</label>
                   <Input
                     name="seuil"
                     type="number"
@@ -692,7 +692,7 @@ export default function TraceurDetailPage() {
                     max={200}
                     value={seuil}
                     onChange={(e) => setSeuil(e.target.value)}
-                    placeholder="Ex : 80"
+                    placeholder={tr('Ex : 80', 'E.g. 80')}
                     rightIcon={<IoSpeedometerOutline size={16} className="text-neutral-400" />}
                   />
                   <Button
@@ -706,27 +706,27 @@ export default function TraceurDetailPage() {
                       setConfiguring('speed');
                       try {
                         await adminService.setSpeedLimit(vehiculeLive.id, Number(seuil));
-                        toast.success('Limite de vitesse enregistrée');
+                        toast.success(tr('Limite de vitesse enregistrée', 'Speed limit saved'));
                         load();
                       } catch (err) {
-                        toast.error(getErrorMessage(err, 'Impossible de configurer la limite de vitesse. Réessayez dans un instant.'));
+                        toast.error(getErrorMessage(err, tr('Impossible de configurer la limite de vitesse. Réessayez dans un instant.', 'Unable to configure the speed limit. Try again in a moment.')));
                       } finally {
                         setConfiguring(null);
                       }
                     }}
                   >
-                    Enregistrer la limite
+                    {tr('Enregistrer la limite', 'Save limit')}
                   </Button>
                 </div>
 
                 <div className="border-t border-neutral-100 pt-4">
-                  <label className="text-xs font-semibold text-neutral-700 mb-1 block">Zone de sécurité (géofence)</label>
-                  <Input name="geoNom" value={geoNom} onChange={(e) => setGeoNom(e.target.value)} placeholder="Nom de la zone (ex : Domicile)" />
+                  <label className="text-xs font-semibold text-neutral-700 mb-1 block">{tr('Zone de sécurité (géofence)', 'Safety zone (geofence)')}</label>
+                  <Input name="geoNom" value={geoNom} onChange={(e) => setGeoNom(e.target.value)} placeholder={tr('Nom de la zone (ex : Domicile)', 'Zone name (e.g. Home)')} />
                   <div className="grid grid-cols-2 gap-2 mt-2">
-                    <Input name="geoLat" value={geoLat} onChange={(e) => setGeoLat(e.target.value)} placeholder="Latitude" />
-                    <Input name="geoLon" value={geoLon} onChange={(e) => setGeoLon(e.target.value)} placeholder="Longitude" />
+                    <Input name="geoLat" value={geoLat} onChange={(e) => setGeoLat(e.target.value)} placeholder={tr('Latitude', 'Latitude')} />
+                    <Input name="geoLon" value={geoLon} onChange={(e) => setGeoLon(e.target.value)} placeholder={tr('Longitude', 'Longitude')} />
                   </div>
-                  <Input name="geoRayon" type="number" min={50} value={geoRayon} onChange={(e) => setGeoRayon(e.target.value)} placeholder="Rayon (mètres)" className="mt-2" />
+                  <Input name="geoRayon" type="number" min={50} value={geoRayon} onChange={(e) => setGeoRayon(e.target.value)} placeholder={tr('Rayon (mètres)', 'Radius (metres)')} className="mt-2" />
                   <Button
                     variant="secondary"
                     size="sm"
@@ -740,26 +740,26 @@ export default function TraceurDetailPage() {
                         await adminService.setGeofence(
                           vehiculeLive.id, geoNom, Number(geoLat), Number(geoLon), Number(geoRayon)
                         );
-                        toast.success('Zone de sécurité enregistrée');
+                        toast.success(tr('Zone de sécurité enregistrée', 'Safety zone saved'));
                         load();
                       } catch (err) {
-                        toast.error(getErrorMessage(err, 'Impossible de configurer la zone de sécurité. Réessayez dans un instant.'));
+                        toast.error(getErrorMessage(err, tr('Impossible de configurer la zone de sécurité. Réessayez dans un instant.', 'Unable to configure the safety zone. Try again in a moment.')));
                       } finally {
                         setConfiguring(null);
                       }
                     }}
                   >
-                    Enregistrer la zone
+                    {tr('Enregistrer la zone', 'Save zone')}
                   </Button>
                 </div>
 
                 <div className="border-t border-neutral-100 pt-4">
-                  <label className="text-xs font-semibold text-neutral-700 mb-1 block">Numéro d&apos;alerte SMS</label>
+                  <label className="text-xs font-semibold text-neutral-700 mb-1 block">{tr('Numéro d’alerte SMS', 'SMS alert number')}</label>
                   <Input
                     name="telephone"
                     value={telephone}
                     onChange={(e) => setTelephone(e.target.value)}
-                    placeholder="Ex : +237690000000"
+                    placeholder={tr('Ex : +237690000000', 'E.g. +237690000000')}
                     rightIcon={<IoCallOutline size={16} className="text-neutral-400" />}
                   />
                   <Button
@@ -773,16 +773,16 @@ export default function TraceurDetailPage() {
                       setConfiguring('phone');
                       try {
                         await adminService.setPhoneAlerte(vehiculeLive.id, telephone);
-                        toast.success('Numéro SMS enregistré');
+                        toast.success(tr('Numéro SMS enregistré', 'SMS number saved'));
                         load();
                       } catch (err) {
-                        toast.error(getErrorMessage(err, 'Impossible d\'enregistrer ce numéro. Vérifiez le format (+237XXXXXXXXX), puis réessayez.'));
+                        toast.error(getErrorMessage(err, tr('Impossible d’enregistrer ce numéro. Vérifiez le format (+237XXXXXXXXX), puis réessayez.', 'Unable to save this number. Check the format (+237XXXXXXXXX), then try again.')));
                       } finally {
                         setConfiguring(null);
                       }
                     }}
                   >
-                    Enregistrer le numéro
+                    {tr('Enregistrer le numéro', 'Save number')}
                   </Button>
                 </div>
               </div>
@@ -792,13 +792,13 @@ export default function TraceurDetailPage() {
           <motion.div variants={item}>
             <Card padding={false}>
               <div className="px-6 pt-5 pb-3">
-                <h2 className="text-base font-semibold text-neutral-900">Alarmes</h2>
+                <h2 className="text-base font-semibold text-neutral-900">{tr('Alarmes', 'Alerts')}</h2>
                 <p className="text-xs text-neutral-600 mt-0.5">
-                  {vehiculeLive.alarmes.length} enregistrée(s) · {vehiculeLive.alarmes.filter((a) => !a.estAcquittee).length} non acquittée(s)
+                  {vehiculeLive.alarmes.length} {tr('enregistrée(s)', 'recorded')} · {vehiculeLive.alarmes.filter((a) => !a.estAcquittee).length} {tr('non acquittée(s)', 'unacknowledged')}
                 </p>
               </div>
               {vehiculeLive.alarmes.length === 0 ? (
-                <div className="px-6 pb-6 text-sm text-neutral-500">Aucune alarme.</div>
+                <div className="px-6 pb-6 text-sm text-neutral-500">{tr('Aucune alarme.', 'No alerts.')}</div>
               ) : (
                 <div className="flex flex-col">
                   {vehiculeLive.alarmes.slice(0, 5).map((a) => (
@@ -806,13 +806,13 @@ export default function TraceurDetailPage() {
                       <div className="flex items-center gap-3">
                         <IoWarningOutline size={16} className="text-warning-strong shrink-0" />
                         <div>
-                          <p className="text-sm font-medium text-neutral-900">{ALARM_LABELS[a.typeAlarme]}</p>
+                          <p className="text-sm font-medium text-neutral-900">{getAlarmLabel(a.typeAlarme)}</p>
                           <p className="text-xs text-neutral-500">{formatDateTime(a.horodatage)}</p>
                         </div>
                       </div>
                       {a.estAcquittee ? (
                         <Badge color="success">
-                          <IoCheckmarkDoneOutline size={13} className="mr-1" /> Acquittée
+                          <IoCheckmarkDoneOutline size={13} className="mr-1" /> {tr('Acquittée', 'Acknowledged')}
                         </Badge>
                       ) : (
                         <Button
@@ -821,15 +821,15 @@ export default function TraceurDetailPage() {
                           onClick={async () => {
                             try {
                               await adminService.acquitAlarme(a.id);
-                              toast.success('Alarme acquittée');
+                              toast.success(tr('Alarme acquittée', 'Alert acknowledged'));
                               load();
                             } catch (err) {
-                              toast.error(getErrorMessage(err, 'Impossible d\'acquitter cette alarme. Réessayez dans un instant.'));
+                              toast.error(getErrorMessage(err, tr('Impossible d’acquitter cette alarme. Réessayez dans un instant.', 'Unable to acknowledge this alert. Try again in a moment.')));
                             }
                           }}
                         >
                           <IoCheckmarkCircleOutline size={15} className="mr-1" />
-                          Acquitter
+                          {tr('Acquitter', 'Acknowledge')}
                         </Button>
                       )}
                     </div>

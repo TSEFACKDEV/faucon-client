@@ -15,6 +15,7 @@ import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 const container = {
   hidden: {},
@@ -26,6 +27,7 @@ const item = {
 };
 
 export default function ParametresPage() {
+  const { tr } = useLanguage();
   const { handleLogout, loading: logoutLoading } = useLogout();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,11 +46,11 @@ export default function ParametresPage() {
       setTelephone(u.telephone ?? '');
     } catch (err) {
       console.error('[Parametres]', err);
-      toast.error(getErrorMessage(err, 'Impossible de charger votre profil. Réessayez dans un instant.'));
+      toast.error(getErrorMessage(err, tr('Impossible de charger votre profil. Réessayez dans un instant.', 'Unable to load your profile. Try again in a moment.')));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tr]);
 
   useEffect(() => {
     const initial = async () => {
@@ -63,9 +65,9 @@ export default function ParametresPage() {
     try {
       const u = await authService.updateProfile({ userName, email, telephone: telephone || undefined });
       setUser(u);
-      toast.success('Profil mis à jour');
+      toast.success(tr('Profil mis à jour', 'Profile updated'));
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, 'Impossible de mettre à jour votre profil. Réessayez dans un instant.'));
+      toast.error(getErrorMessage(err, tr('Impossible de mettre à jour votre profil. Réessayez dans un instant.', 'Unable to update your profile. Try again in a moment.')));
     } finally {
       setSaving(false);
     }
@@ -80,14 +82,14 @@ export default function ParametresPage() {
   }
 
   if (!user) {
-    return <div className="p-8 text-neutral-600">Impossible de charger le profil.</div>;
+    return <div className="p-8 text-neutral-600">{tr('Impossible de charger le profil.', 'Unable to load the profile.')}</div>;
   }
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="p-8 flex flex-col gap-6 max-w-2xl">
       <motion.div variants={item}>
-        <h1 className="text-2xl font-semibold text-neutral-900">Paramètres</h1>
-        <p className="text-sm text-neutral-600 mt-1">Votre compte administrateur sur la plateforme</p>
+        <h1 className="text-2xl font-semibold text-neutral-900">{tr('Paramètres', 'Settings')}</h1>
+        <p className="text-sm text-neutral-600 mt-1">{tr('Votre compte administrateur sur la plateforme', 'Your administrator account on the platform')}</p>
       </motion.div>
 
       <motion.div variants={item}>
@@ -102,33 +104,33 @@ export default function ParametresPage() {
             </div>
             <Badge color="primary">
               <IoShieldCheckmarkOutline size={13} className="mr-1" />
-              {user.role === 'ADMIN' ? 'Administrateur' : 'Utilisateur'}
+              {user.role === 'ADMIN' ? tr('Administrateur', 'Administrator') : tr('Utilisateur', 'User')}
             </Badge>
           </div>
 
           <div className="flex flex-col gap-4">
             <Input
-              label="Nom d'utilisateur"
+              label={tr('Nom d’utilisateur', 'Username')}
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
-              placeholder="Votre nom"
+              placeholder={tr('Votre nom', 'Your name')}
               leftIcon={<IoPersonOutline size={16} />}
             />
             <Input
-              label="Adresse email"
+              label={tr('Adresse email', 'Email address')}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="exemple@faucon.cm"
             />
             <Input
-              label="Téléphone"
+              label={tr('Téléphone', 'Phone')}
               value={telephone}
               onChange={(e) => setTelephone(e.target.value)}
               placeholder="+237XXXXXXXXX"
             />
             <Button loading={saving} onClick={saveProfile} className="self-start">
-              Enregistrer le profil
+              {tr('Enregistrer le profil', 'Save profile')}
             </Button>
           </div>
         </Card>
@@ -138,15 +140,15 @@ export default function ParametresPage() {
         <Card>
           <h2 className="text-base font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <IoInformationCircleOutline size={18} className="text-primary-600" />
-            Informations de session
+            {tr('Informations de session', 'Session information')}
           </h2>
           <div className="flex flex-col gap-3 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-neutral-600">Compte créé le</span>
+              <span className="text-neutral-600">{tr('Compte créé le', 'Account created on')}</span>
               <span className="font-medium text-neutral-900">{formatDateTime(user.dateCreation)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-neutral-600">Rôle</span>
+              <span className="text-neutral-600">{tr('Rôle', 'Role')}</span>
               <Badge color="primary">{user.role}</Badge>
             </div>
           </div>
@@ -157,14 +159,14 @@ export default function ParametresPage() {
         <Card>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-base font-semibold text-neutral-900">Déconnexion</h2>
+              <h2 className="text-base font-semibold text-neutral-900">{tr('Déconnexion', 'Sign out')}</h2>
               <p className="text-sm text-neutral-600 mt-0.5">
-                Terminer la session et revenir à l&apos;écran de connexion
+                {tr('Terminer la session et revenir à l’écran de connexion', 'End the session and return to the sign-in screen')}
               </p>
             </div>
             <Button variant="danger" loading={logoutLoading} onClick={handleLogout}>
               <IoLogOutOutline size={16} />
-              Se déconnecter
+              {tr('Se déconnecter', 'Sign out')}
             </Button>
           </div>
         </Card>

@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/i18n/LanguageProvider';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 // palette catégorielle multi-teinte ni de sa validation CVD : une seule
 // teinte suffit, la longueur de la barre porte la comparaison).
 export default function CategoryBarChart({ data, color = '#0057FF', height = 220 }: Props) {
+  const { tr } = useLanguage();
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart
@@ -31,7 +33,7 @@ export default function CategoryBarChart({ data, color = '#0057FF', height = 220
           width={130}
         />
         <Tooltip
-          formatter={(value) => [value, 'Total']}
+          formatter={(value) => [value, tr('Total', 'Total')]}
           contentStyle={{ borderRadius: 10, border: '1px solid #E1E8F2', fontSize: 12.5 }}
           cursor={{ fill: '#EDF2FA' }}
         />

@@ -8,14 +8,15 @@ import {
   IoLocationOutline, IoArrowForwardOutline,
 } from 'react-icons/io5';
 import { adminService } from '@/services/admin.service';
-import { Alarme, AlarmType } from '@/types';
-import { ALARM_LABELS, formatDateTime, timeAgo, formatCoords } from '@/lib/utils';
+import { Alarme } from '@/types';
+import { ALARM_TYPES, getAlarmLabel, formatDateTime, timeAgo, formatCoords } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/errors';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 const container = {
   hidden: {},
@@ -26,9 +27,10 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-const TYPES = Object.keys(ALARM_LABELS) as AlarmType[];
+const TYPES = ALARM_TYPES;
 
 export default function AlertesPage() {
+  const { tr } = useLanguage();
   const [alarmes, setAlarmes] = useState<Alarme[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState('');
@@ -47,11 +49,11 @@ export default function AlertesPage() {
       }));
     } catch (err) {
       console.error('[Alertes]', err);
-      toast.error(getErrorMessage(err, 'Impossible de charger la liste des alarmes. Réessayez dans un instant.'));
+      toast.error(getErrorMessage(err, tr('Impossible de charger la liste des alarmes. Réessayez dans un instant.', 'Unable to load the alert list. Try again in a moment.')));
     } finally {
       setLoading(false);
     }
-  }, [typeFilter, etatFilter]);
+  }, [typeFilter, etatFilter, tr]);
 
   useEffect(() => {
     const initial = async () => {
@@ -65,10 +67,10 @@ export default function AlertesPage() {
     try {
       await adminService.acquitAlarme(a.id);
       setAlarmes((prev) => prev.map((x) => (x.id === a.id ? { ...x, estAcquittee: true } : x)));
-      toast.success('Alarme acquittée');
+      toast.success(tr('Alarme acquittée', 'Alert acknowledged'));
     } catch (err) {
       console.error('[acquit]', err);
-      toast.error(getErrorMessage(err, 'Impossible d\'acquitter cette alarme. Réessayez dans un instant.'));
+      toast.error(getErrorMessage(err, tr('Impossible d’acquitter cette alarme. Réessayez dans un instant.', 'Unable to acknowledge this alert. Try again in a moment.')));
     } finally {
       setAcquitting(null);
     }
@@ -81,10 +83,10 @@ export default function AlertesPage() {
       await adminService.deleteAlarme(toDelete.id);
       setAlarmes((prev) => prev.filter((x) => x.id !== toDelete.id));
       setToDelete(null);
-      toast.success('Alarme supprimée');
+      toast.success(tr('Alarme supprimée', 'Alert deleted'));
     } catch (err) {
       console.error('[delete]', err);
-      toast.error(getErrorMessage(err, 'Impossible de supprimer cette alarme. Réessayez dans un instant.'));
+      toast.error(getErrorMessage(err, tr('Impossible de supprimer cette alarme. Réessayez dans un instant.', 'Unable to delete this alert. Try again in a moment.')));
     } finally {
       setDeleting(false);
     }
@@ -104,15 +106,15 @@ export default function AlertesPage() {
     <motion.div variants={container} initial="hidden" animate="show" className="p-8 flex flex-col gap-6">
       <motion.div variants={item} className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">Alertes</h1>
+          <h1 className="text-2xl font-semibold text-neutral-900">{tr('Alertes', 'Alerts')}</h1>
           <p className="text-sm text-neutral-600 mt-1">
-            {alarmes.length} alarme(s) affichée(s) · {nbNonAcquittees} non acquittée(s)
+            {alarmes.length} {tr('alarme(s) affichée(s)', 'alert(s) displayed')} · {nbNonAcquittees} {tr('non acquittée(s)', 'unacknowledged')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={load}>
             <IoRefreshOutline size={16} />
-            Actualiser
+            {tr('Actualiser', 'Refresh')}
           </Button>
         </div>
       </motion.div>
@@ -122,30 +124,30 @@ export default function AlertesPage() {
           <div className="px-6 pt-5 pb-4 border-b border-neutral-100 grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
               name="type"
-              label="Type d'alarme"
+              label={tr('Type d’alarme', 'Alert type')}
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
             >
-              <option value="">Tous les types</option>
+              <option value="">{tr('Tous les types', 'All types')}</option>
               {TYPES.map((t) => (
-                <option key={t} value={t}>{ALARM_LABELS[t]}</option>
+                <option key={t} value={t}>{getAlarmLabel(t)}</option>
               ))}
             </Select>
             <Select
               name="etat"
-              label="État"
+              label={tr('État', 'Status')}
               value={etatFilter}
               onChange={(e) => setEtatFilter(e.target.value)}
             >
-              <option value="">Toutes les alarmes</option>
-              <option value="acquittee">Acquittées</option>
-              <option value="non">Non acquittées</option>
+              <option value="">{tr('Toutes les alarmes', 'All alerts')}</option>
+              <option value="acquittee">{tr('Acquittées', 'Acknowledged')}</option>
+              <option value="non">{tr('Non acquittées', 'Unacknowledged')}</option>
             </Select>
           </div>
 
           {alarmes.length === 0 ? (
             <div className="p-10 text-center text-neutral-500 text-sm">
-              Aucune alarme ne correspond aux filtres.
+              {tr('Aucune alarme ne correspond aux filtres.', 'No alert matches the filters.')}
             </div>
           ) : (
             <div className="flex flex-col">
@@ -164,8 +166,8 @@ export default function AlertesPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-neutral-900">{ALARM_LABELS[a.typeAlarme]}</span>
-                      {!a.estAcquittee && <Badge color="warning">Nouvelle</Badge>}
+                      <span className="font-semibold text-neutral-900">{getAlarmLabel(a.typeAlarme)}</span>
+                      {!a.estAcquittee && <Badge color="warning">{tr('Nouvelle', 'New')}</Badge>}
                     </div>
                     <p className="text-sm text-neutral-600 mt-0.5">
                       {a.vehicule ? (
@@ -176,10 +178,10 @@ export default function AlertesPage() {
                           >
                             {a.vehicule.nom}
                           </Link>
-                          <span className="text-neutral-400"> · {a.vehicule.utilisateur?.userName ?? 'non attribué'}</span>
+                          <span className="text-neutral-400"> · {a.vehicule.utilisateur?.userName ?? tr('non attribué', 'unassigned')}</span>
                         </>
                       ) : (
-                        'Traceur supprimé'
+                        tr('Traceur supprimé', 'Tracker deleted')
                       )}
                     </p>
                     <p className="text-xs text-neutral-400 mt-0.5">
@@ -193,7 +195,7 @@ export default function AlertesPage() {
                   <button
                     onClick={() => setSelected(a)}
                     className="hidden md:flex items-center gap-1 text-xs text-neutral-500 hover:text-primary-600 font-medium"
-                    title="Voir la position"
+                    title={tr('Voir la position', 'View position')}
                   >
                     <IoLocationOutline size={14} />
                     {formatCoords(a.latitude, a.longitude)}
@@ -202,7 +204,7 @@ export default function AlertesPage() {
                   <div className="flex items-center gap-1 shrink-0">
                     {a.estAcquittee ? (
                       <Badge color="success">
-                        <IoCheckmarkDoneOutline size={13} className="mr-1" /> Acquittée
+                        <IoCheckmarkDoneOutline size={13} className="mr-1" /> {tr('Acquittée', 'Acknowledged')}
                       </Badge>
                     ) : (
                       <Button
@@ -211,14 +213,14 @@ export default function AlertesPage() {
                         loading={acquitting === a.id}
                         onClick={() => handleAcquit(a)}
                       >
-                        Acquitter
+                        {tr('Acquitter', 'Acknowledge')}
                       </Button>
                     )}
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setSelected(a)}
-                      title="Détails"
+                      title={tr('Détails', 'Details')}
                     >
                       <IoArrowForwardOutline size={15} />
                     </Button>
@@ -226,7 +228,7 @@ export default function AlertesPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setToDelete(a)}
-                      title="Supprimer"
+                      title={tr('Supprimer', 'Delete')}
                     >
                       <IoTrashOutline size={15} />
                     </Button>
@@ -242,20 +244,20 @@ export default function AlertesPage() {
       <Modal
         open={!!selected}
         onClose={() => setSelected(null)}
-        title={selected ? ALARM_LABELS[selected.typeAlarme] : ''}
+        title={selected ? getAlarmLabel(selected.typeAlarme) : ''}
         subtitle={selected ? formatDateTime(selected.horodatage) : ''}
       >
         {selected && (
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <Badge color={selected.estAcquittee ? 'success' : 'warning'} dot>
-                {selected.estAcquittee ? 'Acquittée' : 'Non acquittée'}
+                {selected.estAcquittee ? tr('Acquittée', 'Acknowledged') : tr('Non acquittée', 'Unacknowledged')}
               </Badge>
               {selected.vehicule && (
                 <Link href={`/dashboard/traceurs/${selected.vehicule.id}`}>
                   <Button variant="secondary" size="sm">
                     <IoArrowForwardOutline size={14} />
-                    Voir le traceur
+                    {tr('Voir le traceur', 'View tracker')}
                   </Button>
                 </Link>
               )}
@@ -263,26 +265,26 @@ export default function AlertesPage() {
 
             <div className="flex flex-col gap-2 text-sm bg-neutral-50 rounded-[10px] p-4">
               <div className="flex justify-between">
-                <span className="text-neutral-500">Traceur</span>
+                <span className="text-neutral-500">{tr('Traceur', 'Tracker')}</span>
                 <span className="font-semibold text-neutral-900">
-                  {selected.vehicule?.nom ?? 'Traceur supprimé'}
+                  {selected.vehicule?.nom ?? tr('Traceur supprimé', 'Tracker deleted')}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-500">Position</span>
+                <span className="text-neutral-500">{tr('Position', 'Position')}</span>
                 <span className="font-mono text-neutral-900">
                   {formatCoords(selected.latitude, selected.longitude)}
                 </span>
               </div>
               {selected.valeurMesuree != null && (
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Valeur mesurée</span>
+                  <span className="text-neutral-500">{tr('Valeur mesurée', 'Measured value')}</span>
                   <span className="font-semibold text-neutral-900">{selected.valeurMesuree}</span>
                 </div>
               )}
               {selected.seuilConfigure != null && (
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Seuil configuré</span>
+                  <span className="text-neutral-500">{tr('Seuil configuré', 'Configured threshold')}</span>
                   <span className="font-semibold text-neutral-900">{selected.seuilConfigure}</span>
                 </div>
               )}
@@ -298,7 +300,7 @@ export default function AlertesPage() {
                 }}
               >
                 <IoCheckmarkDoneOutline size={16} />
-                Acquitter
+                {tr('Acquitter', 'Acknowledge')}
               </Button>
             )}
           </div>
@@ -309,19 +311,19 @@ export default function AlertesPage() {
       <Modal
         open={!!toDelete}
         onClose={() => setToDelete(null)}
-        title="Supprimer cette alarme ?"
-        subtitle={toDelete ? ALARM_LABELS[toDelete.typeAlarme] : ''}
+        title={tr('Supprimer cette alarme ?', 'Delete this alert?')}
+        subtitle={toDelete ? getAlarmLabel(toDelete.typeAlarme) : ''}
       >
         <div className="flex flex-col gap-4">
           <p className="text-sm text-neutral-600">
-            Cette action est irréversible.
+            {tr('Cette action est irréversible.', 'This action cannot be undone.')}
           </p>
           <div className="flex gap-3">
             <Button variant="ghost" fullWidth onClick={() => setToDelete(null)}>
-              Annuler
+              {tr('Annuler', 'Cancel')}
             </Button>
             <Button variant="danger" fullWidth loading={deleting} onClick={handleDelete}>
-              Supprimer
+              {tr('Supprimer', 'Delete')}
             </Button>
           </div>
         </div>

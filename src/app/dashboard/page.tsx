@@ -9,7 +9,7 @@ import {
 import dynamic from 'next/dynamic';
 import { adminService } from '@/services/admin.service';
 import { StatsOverview, VehiculeResume } from '@/types';
-import { ALARM_LABELS, MODE_LABELS, isOnline } from '@/lib/utils';
+import { getAlarmLabel, getModeLabel, isOnline } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/errors';
 import { useRealtime } from '@/hooks/useRealtime';
 import { useTick } from '@/hooks/useTick';
@@ -36,7 +36,7 @@ const item = {
 };
 
 export default function DashboardPage() {
-  const { t } = useLanguage();
+  const { t, tr } = useLanguage();
   const [stats, setStats] = useState<StatsOverview | null>(null);
   const [vehicules, setVehicules] = useState<VehiculeResume[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +90,7 @@ export default function DashboardPage() {
       }
     };
     load();
-  }, []);
+  }, [t]);
 
   // Dépend explicitement de `tick` : isOnline() est une fonction du temps,
   // ce recalcul périodique volontaire est ce qui permet à un traceur de
@@ -216,7 +216,7 @@ export default function DashboardPage() {
                 <button
                   onClick={() => mapRef.current?.fitAll()}
                   disabled={vehiculesAvecPosition.length === 0}
-                  title="Recentrer sur tous les traceurs"
+                  title={tr('Recentrer sur tous les traceurs', 'Recenter on all trackers')}
                   className="p-2 rounded-[10px] border border-neutral-100 text-neutral-600 hover:text-primary-600 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <IoLocateOutline size={17} />
@@ -233,12 +233,12 @@ export default function DashboardPage() {
             {followedVehicule && (
               <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur shadow-[0_4px_16px_rgba(11,21,38,0.12)] text-xs font-semibold text-primary-700">
                 <IoLocateOutline size={13} />
-                Suivi : {followedVehicule.nom}
+                {tr('Suivi', 'Following')} : {followedVehicule.nom}
               </div>
             )}
             {vehiculesAvecPosition.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center text-sm text-neutral-500 bg-white/70 pointer-events-none">
-                Aucune position reçue pour le moment
+                {t('dashboard.noPosition')}
               </div>
             )}
           </div>
@@ -265,7 +265,7 @@ export default function DashboardPage() {
           <CategoryBarChart
             color="#B91C1C"
             data={stats.alarmesParType.map((a) => ({
-              key: a.type, label: ALARM_LABELS[a.type], total: a.total,
+              key: a.type, label: getAlarmLabel(a.type), total: a.total,
             }))}
           />
         </Card>
@@ -276,7 +276,7 @@ export default function DashboardPage() {
           <CategoryBarChart
             color="#0057FF"
             data={stats.repartitionModes.map((m) => ({
-              key: m.mode, label: MODE_LABELS[m.mode], total: m.total,
+              key: m.mode, label: getModeLabel(m.mode), total: m.total,
             }))}
           />
         </Card>
